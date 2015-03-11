@@ -56,9 +56,11 @@
             android:layout_height="@dimen/button_height"
             android:layout_margin="@dimen/margin"
             android:background="@color/white"
-            android:contentDescription="TEMP"
+            android:contentDescription="TEP"
             android:onClick="paintClicked"
             android:tag="#FFFFCC00" />
+
+
 
 
     </LinearLayout>
