@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,6 +30,14 @@ public class RecordPlay extends ActionBarActivity{
     private PlayView play_view;
     private TextView text_status;
     private MyListener mListener;
+    private final states state_list = new states("","", "", "");
+    private String current_state;
+    private Button button_create_new;
+    private Button button_initialization_complete;
+    private Button button_increment_stage;
+    private Button button_play_complete;
+
+
 
 
     //canvas bitmap
@@ -41,9 +50,23 @@ public class RecordPlay extends ActionBarActivity{
         setContentView(R.layout.activity_record_play);
 
         play_view = (PlayView)findViewById(R.id.play);
+
+        //Defined buttons
+        button_create_new = (Button)findViewById(R.id.button_create_new_play);
+        button_initialization_complete = (Button)findViewById(R.id.button_initialization_complete);
+        button_increment_stage = (Button)findViewById(R.id.button_increment_stage);
+        button_play_complete = (Button)findViewById(R.id.button_play_complete);
+
+
+
+        //Define current state
+        current_state= state_list.SPLASH;
+        update_button_state(current_state);
+
         //text_status = (TextView)findViewById(R.id.summary_info);
         //text_status.setText("I hope this works");
         //onViewChange();
+
 
     }
 
@@ -88,7 +111,21 @@ public class RecordPlay extends ActionBarActivity{
         return super.onOptionsItemSelected(item);
     }
 
-    public void play_name_save(View view)
+    class states {
+        String SPLASH;
+        String INITIALIZING;
+        String INCREMENTING;
+        String COMPLETE;
+        states(String SPLASH_1, String INITIALIZING_1, String INCREMENTING_1, String COMPLETE_1) {
+            SPLASH = "SPLASH";
+            INITIALIZING = "INITIALIZING";
+            INCREMENTING = "INCREMENTING";
+            COMPLETE = "COMPLETE";
+        }
+
+    }
+
+    public void on_click_create_new_play(View view)
     {
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -104,6 +141,8 @@ public class RecordPlay extends ActionBarActivity{
             public void onClick(DialogInterface dialog, int whichButton) {
                 String value = input.getText().toString();
                 // Do something with value!
+                current_state= state_list.INITIALIZING;
+                update_button_state(current_state);
             }
         });
 
@@ -116,5 +155,54 @@ public class RecordPlay extends ActionBarActivity{
         alert.show();
     }
 
+    public void on_click_initialization_complete(View view)
+    {
+        current_state= state_list.INCREMENTING;
+        update_button_state(current_state);
+    }
 
+    public void on_click_increment_stage(View view)
+    {
+
+    }
+
+    public void on_click_play_complete(View view)
+    {
+
+        current_state= state_list.COMPLETE;
+        update_button_state(current_state);
+
+    }
+
+
+    public void update_button_state(String current_state) {
+        if (current_state == state_list.SPLASH) {
+            //Set the button state
+            button_create_new.setEnabled(true);
+            button_initialization_complete.setEnabled(false);
+            button_increment_stage.setEnabled(false);
+            button_play_complete.setEnabled(false);
+        }
+        else if (current_state == state_list.INITIALIZING){
+            //Set the button state
+            button_create_new.setEnabled(false);
+            button_initialization_complete.setEnabled(true);
+            button_increment_stage.setEnabled(false);
+            button_play_complete.setEnabled(false);
+        }
+        else if (current_state == state_list.INCREMENTING){
+            //Set the button state
+            button_create_new.setEnabled(false);
+            button_initialization_complete.setEnabled(false);
+            button_increment_stage.setEnabled(true);
+            button_play_complete.setEnabled(true);
+        }
+        else if (current_state == state_list.COMPLETE){
+            //Set the button state
+            button_create_new.setEnabled(false);
+            button_initialization_complete.setEnabled(false);
+            button_increment_stage.setEnabled(false);
+            button_play_complete.setEnabled(false);
+        }
+    }
 }

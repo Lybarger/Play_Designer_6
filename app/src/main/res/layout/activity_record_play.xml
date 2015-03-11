@@ -14,50 +14,50 @@
         android:orientation="vertical" >
 
         <Button
-            android:id="@+id/create_new_play"
+            android:id="@+id/button_create_new_play"
             android:text="@string/button_create_new"
             android:layout_width="@dimen/button_width"
             android:layout_height="@dimen/button_height"
             android:layout_margin="@dimen/margin"
             android:background="@color/white"
             android:contentDescription="TEMP"
-            android:onClick="play_name_save"
+            android:onClick="on_click_create_new_play"
             android:tag="#FF660000"/>
 
 
 
         <Button
-            android:id="@+id/initialization_complete"
+            android:id="@+id/button_initialization_complete"
             android:text="@string/button_initialization_complete"
             android:layout_width="@dimen/button_width"
             android:layout_height="@dimen/button_height"
             android:layout_margin="@dimen/margin"
             android:background="@color/white"
             android:contentDescription="TEMP"
-            android:onClick="paintClicked"
+            android:onClick="on_click_initialization_complete"
             android:tag="#FFFF6600" />
 
         <Button
-            android:id="@+id/increment_stage"
+            android:id="@+id/button_increment_stage"
             android:text="@string/button_increment_stage"
             android:layout_width="@dimen/button_width"
             android:layout_height="@dimen/button_height"
             android:layout_margin="@dimen/margin"
             android:background="@color/white"
             android:contentDescription="TEMP"
-            android:onClick="paintClicked"
+            android:onClick="on_click_increment_stage"
             android:tag="#FFFF0000" />
 
 
         <Button
-            android:id="@+id/play_complete"
+            android:id="@+id/button_play_complete"
             android:text="@string/button_play_complete"
             android:layout_width="@dimen/button_width"
             android:layout_height="@dimen/button_height"
             android:layout_margin="@dimen/margin"
             android:background="@color/white"
             android:contentDescription="TEP"
-            android:onClick="paintClicked"
+            android:onClick="on_click_play_complete"
             android:tag="#FFFFCC00" />
 
 
