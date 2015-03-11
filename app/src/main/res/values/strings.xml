@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Play Designer</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_record_play">RecordPlay</string>
+    <string name="button_record_new">Record New Play</string>
+
+
+    <string name="button_create_new">Create New</string>
+    <string name="button_initialization_complete">Initialization Complete</string>
+    <string name="button_increment_stage">Increment Stage</string>
+    <string name="button_play_complete">Play Complete</string>
+</resources>

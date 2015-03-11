@@ -1,0 +1,84 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="horizontal"
+              android:background="@color/black"
+              tools:context=".MainActivity">
+    <!--xmlns="http://schemas.android.com/apk/res/android"-->
+    <!--android:layout_weight="1"-->
+    <LinearLayout
+        android:id="@+id/paint_colors"
+        android:layout_width="@dimen/button_width"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/create_new_play"
+            android:text="@string/button_create_new"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:layout_margin="@dimen/margin"
+            android:background="@color/white"
+            android:contentDescription="TEMP"
+            android:onClick="play_name_save"
+            android:tag="#FF660000"/>
+
+
+
+        <Button
+            android:id="@+id/initialization_complete"
+            android:text="@string/button_initialization_complete"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:layout_margin="@dimen/margin"
+            android:background="@color/white"
+            android:contentDescription="TEMP"
+            android:onClick="paintClicked"
+            android:tag="#FFFF6600" />
+
+        <Button
+            android:id="@+id/increment_stage"
+            android:text="@string/button_increment_stage"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:layout_margin="@dimen/margin"
+            android:background="@color/white"
+            android:contentDescription="TEMP"
+            android:onClick="paintClicked"
+            android:tag="#FFFF0000" />
+
+
+        <Button
+            android:id="@+id/play_complete"
+            android:text="@string/button_play_complete"
+            android:layout_width="@dimen/button_width"
+            android:layout_height="@dimen/button_height"
+            android:layout_margin="@dimen/margin"
+            android:background="@color/white"
+            android:contentDescription="TEMP"
+            android:onClick="paintClicked"
+            android:tag="#FFFFCC00" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/margin"
+        android:orientation="vertical" >
+
+            <uw.playdesigner6.PlayView
+                android:id="@+id/play"
+                android:layout_width="800dp"
+                android:layout_height="600dp"
+                android:background="@drawable/half_court"
+                />
+
+    </LinearLayout>
+
+
+
+
+</LinearLayout>
