@@ -13,6 +13,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created by lybar_000 on 3/10/2015.
  */
@@ -23,6 +27,7 @@ public class PlayView extends View {
     private Canvas canvas_play;
     private Bitmap bitmap_play;
     private Path path_play;
+    private Map<String,List<String>> points;
 
     //Player definition constants
     private int player_size = 20;
@@ -31,11 +36,12 @@ public class PlayView extends View {
     private int text_shift = text_size*6/20;
 
     //Initialize player locations
-    public player player_1 = new player(200, 200, "1", false);
-    public player player_2 = new player(200, 250, "2", false);
-    public player player_3 = new player(200, 300, "3", false);
-    public player player_4 = new player(200, 400, "4", false);
-    public player player_5 = new player(200, 500, "5", false);
+    public player player_1 = new player(400, 200, "1", false);
+    public player player_2 = new player(100, 350, "2", false);
+    public player player_3 = new player(700, 350, "3", false);
+    public player player_4 = new player(250, 500, "4", false);
+    public player player_5 = new player(550, 500, "5", false);
+
 
     public PlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -54,11 +60,16 @@ public class PlayView extends View {
 
     }
 
+    public void setupDataPoints(Map<String,List<String>> points){
+        this.points = points;
+    }
+
+
     private void setupDrawing(){
         //Define circle format
         paint_circle = new Paint();
         paint_circle.setStyle(Paint.Style.FILL);
-        paint_circle.setColor(Color.BLUE);
+        paint_circle.setColor(getResources().getColor(R.color.husky_purple));
 
         //Define text format
         paint_text = new Paint();
@@ -69,7 +80,7 @@ public class PlayView extends View {
         paint_text.setTypeface(tf);
 
         paint_path = new Paint();
-        paint_path.setColor(Color.BLUE);
+        paint_path.setColor(getResources().getColor(R.color.husky_metallic_gold));
         paint_path.setAntiAlias(true);
         paint_path.setStrokeWidth(5);
         paint_path.setStyle(Paint.Style.STROKE);
@@ -89,14 +100,19 @@ public class PlayView extends View {
         bitmap_play = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         canvas_play = new Canvas(bitmap_play);
 
+
+
+
+    }
+
+    public void initial_player_insert(){
         draw_player(player_1);
         draw_player(player_2);
         draw_player(player_3);
         draw_player(player_4);
         draw_player(player_5);
-
-
     }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -116,7 +132,8 @@ public class PlayView extends View {
         player_5 = position_update(event, location_touch, player_5);
 
 
-        canvas_play.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        //canvas_play.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        clear_canvas();
 
         draw_player(player_1);
         draw_player(player_2);
@@ -135,6 +152,9 @@ public class PlayView extends View {
         canvas_play.drawText(player.name, player.X, player.Y + text_shift,paint_text);
     }
 
+    public void clear_canvas(){
+        canvas_play.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+    }
     class location{
         float X;
         float Y;
@@ -168,12 +188,13 @@ public class PlayView extends View {
         double delta_X = location_touch.X - player.X;
         double delta_Y = location_touch.Y - player.Y;
         double distance = Math.pow(Math.pow(delta_X, 2) + Math.pow(delta_Y, 2), 0.5);
-
+        List<String> data = points.get(player.name);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 player.selection_status = (distance < selection_size);
                 if(player.selection_status) {
                     path_play.moveTo(player.X, player.Y);
+                    data.add("(" + player.X + "," + player.Y + ")");
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -181,6 +202,7 @@ public class PlayView extends View {
                     path_play.lineTo(location_touch.X, location_touch.Y);
                     player.X=location_touch.X;
                     player.Y=location_touch.Y;
+                    data.add("(" + player.X + "," + player.Y + ")");
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -189,6 +211,7 @@ public class PlayView extends View {
                     player.Y=location_touch.Y;
                     player.selection_status = false;
                     path_play.reset();
+                    data.add("(" + player.X + "," + player.Y + ")");
                 }
                 break;
             default:

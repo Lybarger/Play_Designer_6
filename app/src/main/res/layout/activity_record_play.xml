@@ -3,84 +3,188 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="horizontal"
-              android:background="@color/black"
+              android:background="@color/white"
               tools:context=".MainActivity">
     <!--xmlns="http://schemas.android.com/apk/res/android"-->
     <!--android:layout_weight="1"-->
-    <LinearLayout
-        android:id="@+id/paint_colors"
-        android:layout_width="@dimen/button_width"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/button_create_new_play"
-            android:text="@string/button_create_new"
+
+
+
+        <LinearLayout
             android:layout_width="@dimen/button_width"
-            android:layout_height="@dimen/button_height"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <Button
+                android:id="@+id/button_create_new_play"
+                android:text="@string/button_create_new"
+                android:onClick="on_click_create_new_play"
+                android:tag="#FF660000"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                />
+
+
+
+            <Button
+                android:id="@+id/button_initialization_complete"
+                android:text="@string/button_initialization_complete"
+                android:onClick="on_click_initialization_complete"
+                android:tag="#FFFF6600"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                />
+
+            <Button
+                android:id="@+id/button_increment_stage"
+                android:text="@string/button_increment_stage"
+                android:onClick="on_click_increment_stage"
+                android:tag="#FFFF0000"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                 />
+
+
+            <Button
+                android:id="@+id/button_play_complete"
+                android:text="@string/button_play_complete"
+                android:onClick="on_click_play_complete"
+                android:tag="#FFFFCC00"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                />
+
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_margin="@dimen/margin"
-            android:background="@color/white"
-            android:contentDescription="TEMP"
-            android:onClick="on_click_create_new_play"
-            android:tag="#FF660000"/>
+            android:orientation="vertical" >
 
+                <uw.playdesigner6.PlayView
+                    android:id="@+id/play"
+                    android:layout_width="800dp"
+                    android:layout_height="600dp"
+                    android:background="@drawable/half_court_cropped"
+                    />
 
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/button_initialization_complete"
-            android:text="@string/button_initialization_complete"
-            android:layout_width="@dimen/button_width"
-            android:layout_height="@dimen/button_height"
-            android:layout_margin="@dimen/margin"
-            android:background="@color/white"
-            android:contentDescription="TEMP"
-            android:onClick="on_click_initialization_complete"
-            android:tag="#FFFF6600" />
-
-        <Button
-            android:id="@+id/button_increment_stage"
-            android:text="@string/button_increment_stage"
-            android:layout_width="@dimen/button_width"
-            android:layout_height="@dimen/button_height"
-            android:layout_margin="@dimen/margin"
-            android:background="@color/white"
-            android:contentDescription="TEMP"
-            android:onClick="on_click_increment_stage"
-            android:tag="#FFFF0000" />
-
-
-        <Button
-            android:id="@+id/button_play_complete"
-            android:text="@string/button_play_complete"
-            android:layout_width="@dimen/button_width"
-            android:layout_height="@dimen/button_height"
-            android:layout_margin="@dimen/margin"
-            android:background="@color/white"
-            android:contentDescription="TEP"
-            android:onClick="on_click_play_complete"
-            android:tag="#FFFFCC00" />
-
-
-
-
-    </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin"
+        android:layout_height="fill_parent"
         android:orientation="vertical" >
 
-            <uw.playdesigner6.PlayView
-                android:id="@+id/play"
-                android:layout_width="800dp"
-                android:layout_height="600dp"
-                android:background="@drawable/half_court"
-                />
+        <TextView
+            android:id="@+id/title_play_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="bold"
+            android:text="Play Name:"/>
+
+        <TextView
+            android:id="@+id/value_play_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="italic"
+            android:text="pending"/>
+
+        <TextView
+            android:id="@+id/title_initialization"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="bold"
+            android:text="Initialization status:"/>
+
+        <TextView
+            android:id="@+id/value_initialization"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="italic"
+            android:text="pending"/>
+
+        <TextView
+            android:id="@+id/title_increment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="bold"
+            android:text="Current Stage:"/>
+
+        <TextView
+            android:id="@+id/value_increment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="italic"
+            android:text="0"/>
+
+        <TextView
+            android:id="@+id/title_play_complete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="bold"
+            android:text="Play Complete:"/>
+
+        <TextView
+            android:id="@+id/value_play_complete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:layout_margin="@dimen/margin"
+            android:textColor="@color/black"
+            android:textSize="@dimen/status_font_size"
+            android:textStyle="italic"
+            android:text="no"/>
 
     </LinearLayout>
-
-
 
 
 </LinearLayout>
