@@ -17,6 +17,19 @@
             android:orientation="vertical" >
 
             <Button
+                android:id="@+id/button_play_existing"
+                android:text="@string/button_play_existing"
+                android:onClick="on_click_play_existing"
+                android:tag="#FF660000"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                />
+
+            <Button
                 android:id="@+id/button_create_new_play"
                 android:text="@string/button_create_new"
                 android:onClick="on_click_create_new_play"

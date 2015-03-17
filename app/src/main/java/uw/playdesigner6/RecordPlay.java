@@ -1,5 +1,6 @@
 package uw.playdesigner6;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -17,12 +18,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +41,7 @@ import java.util.Set;
 
 public class RecordPlay extends ActionBarActivity{
 
+
     private Paint paint_circle;
     private ImageView image_court, image_play;
     private Canvas canvas_play;
@@ -39,8 +49,9 @@ public class RecordPlay extends ActionBarActivity{
     private PlayView play_view;
     private TextView text_status;
     private MyListener mListener;
-    private final states state_list = new states("","", "", "");
+    private final states state_list = new states("","", "", "", "");
     private String current_state;
+    private Button button_play_existing;
     private Button button_create_new;
     private Button button_initialization_complete;
     private Button button_increment_stage;
@@ -69,6 +80,7 @@ public class RecordPlay extends ActionBarActivity{
         play_view = (PlayView)findViewById(R.id.play);
 
         //Define buttons
+        button_play_existing = (Button)findViewById(R.id.button_play_existing);
         button_create_new = (Button)findViewById(R.id.button_create_new_play);
         button_initialization_complete = (Button)findViewById(R.id.button_initialization_complete);
         button_increment_stage = (Button)findViewById(R.id.button_increment_stage);
@@ -152,11 +164,13 @@ public class RecordPlay extends ActionBarActivity{
 
     class states {
         String SPLASH;
+        String REPLAY;
         String INITIALIZING;
         String INCREMENTING;
         String COMPLETE;
-        states(String SPLASH_1, String INITIALIZING_1, String INCREMENTING_1, String COMPLETE_1) {
+        states(String SPLASH_1, String REPLAY_1, String INITIALIZING_1, String INCREMENTING_1, String COMPLETE_1) {
             SPLASH = "SPLASH";
+            REPLAY = "REPLAY";
             INITIALIZING = "INITIALIZING";
             INCREMENTING = "INCREMENTING";
             COMPLETE = "COMPLETE";
@@ -164,6 +178,28 @@ public class RecordPlay extends ActionBarActivity{
 
     }
 
+    public void on_click_play_existing(View view)
+    {
+
+        File dir = getFilesDir();
+        File[] file_list = dir.listFiles();
+        String[] filename_list = dir.list();
+        System.out.println( filename_list );
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Make your selection");
+        builder.setItems(filename_list, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int filename_list) {
+                // Do something with the selection
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
+
+        current_state= state_list.REPLAY;
+        update_button_state(current_state);
+
+    }
     public void on_click_create_new_play(View view)
     {
 
@@ -222,6 +258,10 @@ public class RecordPlay extends ActionBarActivity{
         String output = write_play();
         System.out.println(output);
         write_to_file("filename_1.XML", output);
+        String string_read = read_from_file("filename_1.XML");
+        System.out.println(" BREAK");
+        System.out.println(string_read);
+        System.out.println(Environment.getDataDirectory());
 
         //printMap();
         //clearMap();
@@ -232,13 +272,23 @@ public class RecordPlay extends ActionBarActivity{
     public void update_button_state(String current_state) {
         if (current_state == state_list.SPLASH) {
             //Set the button_shape_enabled state
+            button_play_existing.setEnabled(true);
             button_create_new.setEnabled(true);
+            button_initialization_complete.setEnabled(false);
+            button_increment_stage.setEnabled(false);
+            button_play_complete.setEnabled(false);
+        }
+        else if (current_state == state_list.REPLAY) {
+            //Set the button_shape_enabled state
+            button_play_existing.setEnabled(false);
+            button_create_new.setEnabled(false);
             button_initialization_complete.setEnabled(false);
             button_increment_stage.setEnabled(false);
             button_play_complete.setEnabled(false);
         }
         else if (current_state == state_list.INITIALIZING){
             //Set the button_shape_enabled state
+            button_play_existing.setEnabled(false);
             button_create_new.setEnabled(false);
             button_initialization_complete.setEnabled(true);
             button_increment_stage.setEnabled(false);
@@ -246,6 +296,7 @@ public class RecordPlay extends ActionBarActivity{
         }
         else if (current_state == state_list.INCREMENTING){
             //Set the button_shape_enabled state
+            button_play_existing.setEnabled(false);
             button_create_new.setEnabled(false);
             button_initialization_complete.setEnabled(false);
             button_increment_stage.setEnabled(true);
@@ -253,6 +304,7 @@ public class RecordPlay extends ActionBarActivity{
         }
         else if (current_state == state_list.COMPLETE){
             //Set the button_shape_enabled state
+            button_play_existing.setEnabled(true);
             button_create_new.setEnabled(true);
             button_initialization_complete.setEnabled(false);
             button_increment_stage.setEnabled(false);
@@ -261,7 +313,36 @@ public class RecordPlay extends ActionBarActivity{
     }
 
 
+    public String read_from_file(String filename){
+        String input_string ="Garbage";
+        try {
+            FileInputStream file = openFileInput(filename);
+            InputStreamReader input_stream = new InputStreamReader(file);
 
+            BufferedReader reader = new BufferedReader(input_stream);
+            StringBuilder input_string_builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                input_string_builder.append(line);   // add everything to StringBuilder
+                // here you can have your logic of comparison.
+                if(line.toString().equals(".")) {
+                    // do something
+                }
+                input_string =input_string_builder.toString();
+            }
+
+
+        } catch (FileNotFoundException e) {
+            // TODO
+
+        } catch (IOException e) {
+            // TODO
+        } catch (Exception e){
+            // TODO
+
+        }
+        return input_string;
+    }
 
     public void write_to_file(String filename, String string){
         /* Checks if external storage is available for read and write */
@@ -280,14 +361,14 @@ public class RecordPlay extends ActionBarActivity{
     //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
     public String write_play() {
         String format =
-                "<?xml version='1.0' encoding='UTF-8'?>" +
-                        "<record>" +
-                        "   <study id='%s'>" +
-                        "       <topic>%s</topic>" +
-                        "       <content>%s</content>" +
-                        "       <author>%s</author>" +
-                        "       <date>%s</date>" +
-                        "   </study>" +
+                "<?xml version='1.0' encoding='UTF-8'?>" + "\n" +
+                        "<record>" + "\n" +
+                        "   <study id='%s'>" + "\n" +
+                        "       <topic>%s</topic>" + "\n" +
+                        "       <content>%s</content>" + "\n" +
+                        "       <author>%s</author>" + "\n" +
+                        "       <date>%s</date>" + "\n" +
+                        "   </study>" + "\n" +
                         "</record>";
         return String.format(format, "a", "B", "c", "d", "c");
 

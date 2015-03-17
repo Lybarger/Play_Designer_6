@@ -2,6 +2,7 @@ package uw.playdesigner6;
 
 import android.content.Intent;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,6 +13,10 @@ import java.io.File;
 
 
 public class Splash extends ActionBarActivity {
+
+
+    /** Duration of wait **/
+    private final int SPLASH_DISPLAY_LENGTH = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +32,20 @@ public class Splash extends ActionBarActivity {
         }
         Boolean check = isExternalStorageWritable();
         System.out.println("EXTERNAL CHECK:" + check);
+
+/*        //http://stackoverflow.com/questions/5486789/how-do-i-make-a-splash-screen-in-android
+        new Handler().postDelayed(new Runnable(){
+            @Override
+            public void run() {
+                *//* Create an Intent that will start the Menu-Activity. *//*
+                //Intent mainIntent = new Intent(Splash.this,Menu.class);
+                //Splash.this.startActivity(mainIntent);
+                //Splash.this.finish();
+                Intent intent = new Intent(Splash.this, RecordPlay.class);
+                startActivity(intent);
+            }
+        }, SPLASH_DISPLAY_LENGTH);*/
+
     }
 
 
