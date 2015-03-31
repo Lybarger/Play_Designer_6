@@ -1,29 +1,27 @@
 package uw.playdesigner6;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,7 +46,7 @@ public class RecordPlay extends ActionBarActivity{
     private Bitmap bitmap_play;
     private PlayView play_view;
     private TextView text_status;
-    private MyListener mListener;
+
     private final states state_list = new states("","", "", "", "");
     private String current_state;
     private Button button_play_existing;
@@ -58,10 +56,12 @@ public class RecordPlay extends ActionBarActivity{
     private Button button_play_complete;
     private TextView text_play_name;
     private TextView text_initialization;
-    private TextView text_current_stage;
+    private TextView textCurrentStage;
     private TextView text_play_complete;
-
-    private int current_stage = 0;
+    private String play_filename;
+    private String play_as_string;
+    private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "\n";
+    private int currentStage = 1;
 
     private Map<String,List<String>> dataPoints;
 
@@ -89,13 +89,13 @@ public class RecordPlay extends ActionBarActivity{
         //Defined texts
         text_play_name = (TextView)findViewById(R.id.value_play_name);
         text_initialization = (TextView)findViewById(R.id.value_initialization);
-        text_current_stage = (TextView)findViewById(R.id.value_increment);
+        textCurrentStage = (TextView)findViewById(R.id.value_increment);
         text_play_complete = (TextView)findViewById(R.id.value_play_complete);
 
 
         //Define current state
         current_state= state_list.SPLASH;
-        update_button_state(current_state);
+        updateButtonState(current_state);
 
 
         //onViewChange();
@@ -118,7 +118,7 @@ public class RecordPlay extends ActionBarActivity{
     public void printMap(){
         Set<String> keys = dataPoints.keySet();
         for (String key : keys) {
-            System.out.println("Player " + key +" : ");
+            System.out.println("\nPlayer " + key +" : \n");
             List<String> points = dataPoints.get(key);
             for (String point : points){
                 System.out.print(point);
@@ -126,12 +126,24 @@ public class RecordPlay extends ActionBarActivity{
         }
     }
 
-    public void clearMap(){
+    public void mapClear(){
         Set<String> keys = dataPoints.keySet();
         for (String key : keys){
             List<String> points = dataPoints.get(key);
             points.clear();
         }
+    }
+
+    public void mapLastValue(){
+        Set<String> keys = dataPoints.keySet();
+        for (String key : keys){
+            List<String> points = dataPoints.get(key);
+            String last_entry = points.get(points.size()-1);
+            points.clear();
+            points.add(last_entry);
+
+        }
+
     }
 
     public void onViewChange(){
@@ -178,7 +190,7 @@ public class RecordPlay extends ActionBarActivity{
 
     }
 
-    public void on_click_play_existing(View view)
+    public void onClickPlayExisting(View view)
     {
 
         File dir = getFilesDir();
@@ -197,10 +209,10 @@ public class RecordPlay extends ActionBarActivity{
         alert.show();
 
         current_state= state_list.REPLAY;
-        update_button_state(current_state);
+        updateButtonState(current_state);
 
     }
-    public void on_click_create_new_play(View view)
+    public void onClickCreateNewPlay(View view)
     {
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -214,11 +226,11 @@ public class RecordPlay extends ActionBarActivity{
 
         alert.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                String value = input.getText().toString();
+                play_filename = input.getText().toString();
                 // Do something with value!
-                text_play_name.setText(value);
+                text_play_name.setText(play_filename);
                 current_state= state_list.INITIALIZING;
-                update_button_state(current_state);
+                updateButtonState(current_state);
             }
         });
 
@@ -231,45 +243,89 @@ public class RecordPlay extends ActionBarActivity{
         alert.show();
 
         play_view.initial_player_insert();
+        play_as_string = xml_header + "<play>";
+
+
+
     }
 
-    public void on_click_initialization_complete(View view)
+    public void onClickInitializationComplete(View view)
     {
         text_initialization.setText("complete");
         current_state= state_list.INCREMENTING;
-        update_button_state(current_state);
-        current_stage=1;
-        text_current_stage.setText(Integer.toString(current_stage));
+        updateButtonState(current_state);
+        currentStage=1;
+        textCurrentStage.setText(Integer.toString(currentStage));
+        mapLastValue();
     }
 
-    public void on_click_increment_stage(View view)
+    public void onClickIncrementStage(View view)
     {
-        current_stage++;
-        text_current_stage.setText(Integer.toString(current_stage));
+        concatenateStage();
+        currentStage++;
+        textCurrentStage.setText(Integer.toString(currentStage));
+
+
+        mapClear();
+
+
     }
 
-    public void on_click_play_complete(View view)
+    public void onClickPlayComplete(View view)
     {
         text_play_complete.setText("complete");
         current_state= state_list.COMPLETE;
         play_view.clear_canvas();
-
-        update_button_state(current_state);
-        String output = write_play();
-        System.out.println(output);
-        write_to_file("filename_1.XML", output);
-        String string_read = read_from_file("filename_1.XML");
-        System.out.println(" BREAK");
+        //concatenateStage();
+        updateButtonState(current_state);
+        concatenateStage();
+        mapClear();
+        // System.out.println(play_as_string);
+        play_as_string= play_as_string + "</play>";
+        String play_filename_full = play_filename + ".XML";
+        writeToFile(play_filename_full, play_as_string);
+        String string_read = readFromFile(play_filename + ".XML");
+//         System.out.println(" BREAK");
         System.out.println(string_read);
-        System.out.println(Environment.getDataDirectory());
 
-        //printMap();
+        //http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
+        XMLParser parser = new XMLParser();
+        String xml = string_read; // getting XML
+        Document doc = parser.getDomElement(xml); // getting DOM element
+
+        String KEY_STAGE = "stage";
+        String KEY_PLAYER = "player";
+        String KEY_INDEX= "stageNumber";
+        String KEY_XY="xy";
+        NodeList nl = doc.getElementsByTagName(KEY_STAGE);
+        System.out.println(nl.getLength());
+        String output = parser.parsePlay(doc,1);
+
+        //System.out.println(doc);
+        //System.out.println(nl);
+        // looping through all item nodes <item>
+        for (int i = 0; i < nl.getLength(); i++) {
+            // creating new HashMap
+            HashMap<String, String> map = new HashMap<String, String>();
+            Element e = (Element) nl.item(i);
+            System.out.println("Stage " +parser.getValue(e,KEY_STAGE));
+            System.out.println("Stage number " + parser.getValue(e,KEY_INDEX));
+            System.out.println("Player " + parser.getValue(e,KEY_PLAYER));
+
+
+
+            //System.out.println(parser.getValue(e,KEY_XY));
+
+        }
+        // System.out.println(Environment.getDataDirectory());
+
+
         //clearMap();
         //printMap();
     }
 
 
-    public void update_button_state(String current_state) {
+    public void updateButtonState(String current_state) {
         if (current_state == state_list.SPLASH) {
             //Set the button_shape_enabled state
             button_play_existing.setEnabled(true);
@@ -313,7 +369,7 @@ public class RecordPlay extends ActionBarActivity{
     }
 
 
-    public String read_from_file(String filename){
+    public String readFromFile(String filename){
         String input_string ="Garbage";
         try {
             FileInputStream file = openFileInput(filename);
@@ -344,7 +400,7 @@ public class RecordPlay extends ActionBarActivity{
         return input_string;
     }
 
-    public void write_to_file(String filename, String string){
+    public void writeToFile(String filename, String string){
         /* Checks if external storage is available for read and write */
 
         FileOutputStream outputStream;
@@ -359,18 +415,42 @@ public class RecordPlay extends ActionBarActivity{
 
     }
     //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
-    public String write_play() {
+    public void concatenateStage() {
         String format =
-                "<?xml version='1.0' encoding='UTF-8'?>" + "\n" +
-                        "<record>" + "\n" +
-                        "   <study id='%s'>" + "\n" +
-                        "       <topic>%s</topic>" + "\n" +
-                        "       <content>%s</content>" + "\n" +
-                        "       <author>%s</author>" + "\n" +
-                        "       <date>%s</date>" + "\n" +
-                        "   </study>" + "\n" +
-                        "</record>";
-        return String.format(format, "a", "B", "c", "d", "c");
+            "<stage>" + "\n" +
+                "<stageNumber>'%s'</stageNumber>" + "\n" +
+                "<player>" + "\n" +
+                    "<id>1</id>" + "\n" +
+                    "<xy>'%s'</xy>" + "\n" +
+                "</player>" + "\n" +
+                "<player>" + "\n" +
+                    "<id>2</id>" + "\n" +
+                    "<xy>'%s'</xy>" + "\n" +
+                "</player>" + "\n" +
+                "<player>" + "\n" +
+                    "<id>3</id>" + "\n" +
+                    "<xy>'%s'</xy>" + "\n" +
+                "</player>" + "\n" +
+                "<player>" + "\n" +
+                    "<id>4</id>" + "\n" +
+                    "<xy>'%s'</xy>" + "\n" +
+                "</player>" + "\n" +
+                "<player>" + "\n" +
+                    "<id>5</id>" + "\n" +
+                    "<xy>'%s'</xy>" + "\n" +
+                "</player>" + "\n" +
+            "</stage>" + "\n"
+            ;
+         play_as_string = play_as_string + String.format(format,
+                currentStage,
+                dataPoints.get("1"),
+                dataPoints.get("2"),
+                dataPoints.get("3"),
+                dataPoints.get("4"),
+                dataPoints.get("5"));
+
 
     }
+
+
 }

@@ -36,11 +36,22 @@ public class PlayView extends View {
     private int text_shift = text_size*6/20;
 
     //Initialize player locations
-    public player player_1 = new player(400, 200, "1", false);
-    public player player_2 = new player(100, 350, "2", false);
-    public player player_3 = new player(700, 350, "3", false);
-    public player player_4 = new player(250, 500, "4", false);
-    public player player_5 = new player(550, 500, "5", false);
+    private static int x_1 = 400;
+    private static int y_1 = 200;
+    private static int x_2 = 100;
+    private static int y_2 = 350;
+    private static int x_3 = 700;
+    private static int y_3 = 350;
+    private static int x_4 = 250;
+    private static int y_4 = 500;
+    private static int x_5 = 550;
+    private static int y_5 = 500;
+
+    public player player_1 = new player(x_1, y_1, "1", false);
+    public player player_2 = new player(x_2, y_2, "2", false);
+    public player player_3 = new player(x_3, y_3, "3", false);
+    public player player_4 = new player(x_4, y_4, "4", false);
+    public player player_5 = new player(x_5, y_5, "5", false);
 
 
     public PlayView(Context context, AttributeSet attrs) {
@@ -111,7 +122,21 @@ public class PlayView extends View {
         draw_player(player_3);
         draw_player(player_4);
         draw_player(player_5);
+
+
+        List<String> data = points.get("1");
+        data.add("(" + x_1 + "," + y_1 + ")");
+        data = points.get("2");
+        data.add("(" + x_2 + "," + y_2 + ")");
+        data = points.get("3");
+        data.add("(" + x_3 + "," + y_3 + ")");
+        data = points.get("4");
+        data.add("(" + x_4 + "," + y_4 + ")");
+        data = points.get("5");
+        data.add("(" + x_5 + "," + y_5 + ")");
+
     }
+
 
 
     @Override
@@ -184,10 +209,12 @@ public class PlayView extends View {
             selection_status = selection_status_temp;
         }
     }
+
     private player position_update(MotionEvent event, location location_touch, player player) {
         double delta_X = location_touch.X - player.X;
         double delta_Y = location_touch.Y - player.Y;
         double distance = Math.pow(Math.pow(delta_X, 2) + Math.pow(delta_Y, 2), 0.5);
+        // List<String> data = points.get(player.name);
         List<String> data = points.get(player.name);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:

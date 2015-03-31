@@ -19,7 +19,7 @@
             <Button
                 android:id="@+id/button_play_existing"
                 android:text="@string/button_play_existing"
-                android:onClick="on_click_play_existing"
+                android:onClick="onClickPlayExisting"
                 android:tag="#FF660000"
 
                 android:layout_width="match_parent"
@@ -32,7 +32,7 @@
             <Button
                 android:id="@+id/button_create_new_play"
                 android:text="@string/button_create_new"
-                android:onClick="on_click_create_new_play"
+                android:onClick="onClickCreateNewPlay"
                 android:tag="#FF660000"
 
                 android:layout_width="match_parent"
@@ -47,7 +47,7 @@
             <Button
                 android:id="@+id/button_initialization_complete"
                 android:text="@string/button_initialization_complete"
-                android:onClick="on_click_initialization_complete"
+                android:onClick="onClickInitializationComplete"
                 android:tag="#FFFF6600"
 
                 android:layout_width="match_parent"
@@ -60,7 +60,7 @@
             <Button
                 android:id="@+id/button_increment_stage"
                 android:text="@string/button_increment_stage"
-                android:onClick="on_click_increment_stage"
+                android:onClick="onClickIncrementStage"
                 android:tag="#FFFF0000"
 
                 android:layout_width="match_parent"
@@ -74,7 +74,7 @@
             <Button
                 android:id="@+id/button_play_complete"
                 android:text="@string/button_play_complete"
-                android:onClick="on_click_play_complete"
+                android:onClick="onClickPlayComplete"
                 android:tag="#FFFFCC00"
 
                 android:layout_width="match_parent"
