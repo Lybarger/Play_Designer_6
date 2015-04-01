@@ -295,11 +295,11 @@ public class RecordPlay extends ActionBarActivity{
 
         String KEY_STAGE = "stage";
         String KEY_PLAYER = "player";
-        String KEY_INDEX= "stageNumber";
+        String KEY_INDEX= "stage_number";
         String KEY_XY="xy";
         NodeList nl = doc.getElementsByTagName(KEY_STAGE);
         System.out.println(nl.getLength());
-        String output = parser.parsePlay(doc,1);
+        String output = parser.parsePlay(xml);
 
         //System.out.println(doc);
         //System.out.println(nl);
@@ -308,9 +308,9 @@ public class RecordPlay extends ActionBarActivity{
             // creating new HashMap
             HashMap<String, String> map = new HashMap<String, String>();
             Element e = (Element) nl.item(i);
-            System.out.println("Stage " +parser.getValue(e,KEY_STAGE));
-            System.out.println("Stage number " + parser.getValue(e,KEY_INDEX));
-            System.out.println("Player " + parser.getValue(e,KEY_PLAYER));
+            //System.out.println("Stage " +parser.getValue(e,KEY_STAGE));
+            //System.out.println("Stage number " + parser.getValue(e,KEY_INDEX));
+            //System.out.println("Player " + parser.getValue(e,KEY_PLAYER));
 
 
 
@@ -418,7 +418,6 @@ public class RecordPlay extends ActionBarActivity{
     public void concatenateStage() {
         String format =
             "<stage>" + "\n" +
-                "<stageNumber>'%s'</stageNumber>" + "\n" +
                 "<player>" + "\n" +
                     "<id>1</id>" + "\n" +
                     "<xy>'%s'</xy>" + "\n" +
@@ -442,7 +441,6 @@ public class RecordPlay extends ActionBarActivity{
             "</stage>" + "\n"
             ;
          play_as_string = play_as_string + String.format(format,
-                currentStage,
                 dataPoints.get("1"),
                 dataPoints.get("2"),
                 dataPoints.get("3"),
