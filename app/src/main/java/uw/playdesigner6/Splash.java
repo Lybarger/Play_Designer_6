@@ -2,7 +2,6 @@ package uw.playdesigner6;
 
 import android.content.Intent;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -79,7 +78,7 @@ public class Splash extends ActionBarActivity {
     }
     public void sendMessage(View view)
     {
-        Intent intent = new Intent(Splash.this, RecordPlay.class);
+        Intent intent = new Intent(Splash.this, Main.class);
         startActivity(intent);
     }
 }

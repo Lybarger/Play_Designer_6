@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -19,9 +20,6 @@ import android.widget.TextView;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class RecordPlay extends ActionBarActivity{
+public class Main extends ActionBarActivity{
 
 
     private Paint paint_circle;
@@ -75,7 +73,19 @@ public class RecordPlay extends ActionBarActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_record_play);
+
+        String folder_main = "play_designer";
+
+        File f = new File(Environment.getExternalStorageDirectory(),
+                folder_main);
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+        Boolean check = isExternalStorageWritable();
+        System.out.println("EXTERNAL CHECK:" + check);
+
+
+        setContentView(R.layout.activity_main);
 
         play_view = (PlayView)findViewById(R.id.play);
 
@@ -114,6 +124,13 @@ public class RecordPlay extends ActionBarActivity{
         play_view.setupDataPoints(dataPoints);
     }
 
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
 
     public void printMap(){
         Set<String> keys = dataPoints.keySet();
@@ -192,24 +209,29 @@ public class RecordPlay extends ActionBarActivity{
 
     public void onClickPlayExisting(View view)
     {
+        current_state= state_list.REPLAY;
+        updateButtonState(current_state);
 
         File dir = getFilesDir();
         File[] file_list = dir.listFiles();
-        String[] filename_list = dir.list();
+        final String[] filename_list = dir.list();
         System.out.println( filename_list );
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Make your selection");
         builder.setItems(filename_list, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int filename_list) {
+            public void onClick(DialogInterface dialog, int item) {
                 // Do something with the selection
+            String fileToPlay=filename_list[item];
+            playPlay(fileToPlay);
             }
         });
         AlertDialog alert = builder.create();
         alert.show();
-
-        current_state= state_list.REPLAY;
+        current_state= state_list.SPLASH;
         updateButtonState(current_state);
+
+
 
     }
     public void onClickCreateNewPlay(View view)
@@ -242,7 +264,7 @@ public class RecordPlay extends ActionBarActivity{
 
         alert.show();
 
-        play_view.initial_player_insert();
+        play_view.initialPlayerInsert();
         play_as_string = xml_header + "<play>";
 
 
@@ -284,44 +306,7 @@ public class RecordPlay extends ActionBarActivity{
         play_as_string= play_as_string + "</play>";
         String play_filename_full = play_filename + ".XML";
         writeToFile(play_filename_full, play_as_string);
-        String string_read = readFromFile(play_filename + ".XML");
-//         System.out.println(" BREAK");
-        System.out.println(string_read);
 
-        //http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
-        XMLParser parser = new XMLParser();
-        String xml = string_read; // getting XML
-        Document doc = parser.getDomElement(xml); // getting DOM element
-
-        String KEY_STAGE = "stage";
-        String KEY_PLAYER = "player";
-        String KEY_INDEX= "stage_number";
-        String KEY_XY="xy";
-        NodeList nl = doc.getElementsByTagName(KEY_STAGE);
-        System.out.println(nl.getLength());
-        String output = parser.parsePlay(xml);
-
-        //System.out.println(doc);
-        //System.out.println(nl);
-        // looping through all item nodes <item>
-        for (int i = 0; i < nl.getLength(); i++) {
-            // creating new HashMap
-            HashMap<String, String> map = new HashMap<String, String>();
-            Element e = (Element) nl.item(i);
-            //System.out.println("Stage " +parser.getValue(e,KEY_STAGE));
-            //System.out.println("Stage number " + parser.getValue(e,KEY_INDEX));
-            //System.out.println("Player " + parser.getValue(e,KEY_PLAYER));
-
-
-
-            //System.out.println(parser.getValue(e,KEY_XY));
-
-        }
-        // System.out.println(Environment.getDataDirectory());
-
-
-        //clearMap();
-        //printMap();
     }
 
 
@@ -450,5 +435,27 @@ public class RecordPlay extends ActionBarActivity{
 
     }
 
+    public void playPlay(String filename){
+        System.out.println( filename );
+        String string_read = readFromFile(filename);
+//         System.out.println(" BREAK");
+        System.out.println(string_read);
 
+        //http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
+        XMLParser parser = new XMLParser();
+        String xml = string_read; // getting XML
+        Document doc = parser.getDomElement(xml); // getting DOM element
+
+        String KEY_STAGE = "stage";
+        String KEY_PLAYER = "player";
+        String KEY_INDEX= "stage_number";
+        String KEY_XY="xy";
+        NodeList nl = doc.getElementsByTagName(KEY_STAGE);
+        System.out.println(nl.getLength());
+        Map<String,String> output = parser.getStage(xml, 0);
+        System.out.println( output );
+        Map<String,String> output1 = parser.getStage(xml, 1);
+        System.out.println( output1 );
+
+    }
 }

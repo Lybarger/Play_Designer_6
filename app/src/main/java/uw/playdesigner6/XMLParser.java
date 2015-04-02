@@ -6,6 +6,9 @@ package uw.playdesigner6;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,6 +34,9 @@ import org.xml.sax.SAXException;
 import android.util.Log;
 
 public class XMLParser {
+
+
+
 
     // constructor
     public XMLParser() {
@@ -109,12 +115,15 @@ public class XMLParser {
         }
         return "";
     }
-    public final String parsePlay(String XML){
+    public Map<String,String> getStage(String XML, int stageNumber){
         final String KEY_STAGE = "stage";
         final String KEY_PLAYER = "player";
         final String KEY_STAGE_NUMBER= "stage_number";
         final String KEY_XY="xy";
         final String KEY_ID="id";
+        Map<String, String> result = new HashMap<String, String >();
+
+
         Node child;
         Node grandchild;
 
@@ -123,11 +132,16 @@ public class XMLParser {
         //Get list of all STAGES
         NodeList stageList = document.getElementsByTagName(KEY_STAGE);
 
+        int stageCount =stageList.getLength();
+
+        boolean stageRemaining=stageNumber <= stageCount-1;
+
         //Loop through each STAGE
-        for (int i = 0; i < stageList.getLength(); i++) {
-            System.out.println("Current stage: " + String.valueOf(i));
+        if (stageRemaining) {
+            //for (int i = 0; i < stageList.getLength(); i++) {
+            System.out.println("Current stage: " + String.valueOf(stageNumber));
             //Current STAGE node
-            Node currentItem = stageList.item(i);
+            Node currentItem = stageList.item(stageNumber);
 
             //Current STAGE element
             Element currentElement = (Element) currentItem;
@@ -146,85 +160,21 @@ public class XMLParser {
                         Element childElement = (Element) child;
                         String childName = childElement.getNodeName();
 
-                        //String childValue = getValue(childElement, KEY_XY);
-                        //System.out.println(childName + " " + childValue);
                         System.out.println("Child: " + String.valueOf(j) + " " + childName);
 
-                        /*switch (childName) {
-                            case KEY_STAGE_NUMBER:
-                                System.out.println("Stage Number: " + childName + " " + childValue);
-                            case KEY_PLAYER:
-                                System.out.println("Player: " + childName + " " + childValue);
-                            case KEY_ID:
-                                System.out.println("Player ID: " + childName + " " + childValue);
-                            case KEY_XY:
-                                System.out.println("Player xy: " + childName + " " + childValue);
+                        System.out.println(getValue(childElement, KEY_ID));
+                        System.out.println(getValue(childElement, KEY_XY));
 
-
-                        }*/
-                        System.out.println(getValue(childElement,KEY_ID));
-                        System.out.println(getValue(childElement,KEY_XY));
-                        int k = 0;
-                        //Make sure current STAGE element is not empty
-
-                        if (child != null) {
-
-                            //Determine if current STAGE element has children
-                            if (child.hasChildNodes()) {
-
-                                for (grandchild = child.getFirstChild(); grandchild != null; grandchild = grandchild.getNextSibling()) {
-
-
-                                    String grandchildName =grandchild.getNodeName();
-
-
-                                   /* if (grandchildName == KEY_ID){
-
-                                    }else{};*/
-                                    System.out.println("Grandchild: " + String.valueOf(k) + ", Tag: " + grandchildName + ", Value: ");
-                                    k++;
-
-                                    //Element grandchildElement = (Element) grandchild;
-                                    //String grandchildName = grandchildElement.getLocalName();
-                                    //System.out.println(grandchildName);
-
-                                }
-                            }
-                        }
-
-
-
-//                        System.out.println(childName);
-//                        String elementValue = childElement.getNodeValue();
-//                        //System.out.println(elementValue);
-//
-//                        String nodeValue = getValue(childElement,KEY_STAGE);
-//                        System.out.println(nodeValue);
-//                        nodeValue = getValue(childElement,KEY_XY);
-//                        System.out.println(nodeValue);
-//
-//
-//                        String nodeName = child.getNodeName();
-//                        System.out.println(nodeName);
+                        String idValue=getValue(childElement, KEY_ID);
+                        String xyValue=getValue(childElement, KEY_XY);
+                        result.put(idValue,xyValue);
 
                     }
                 }
             }
-
-
-            //NodeList indexList=
-
-//            NodeList nodeList = stageElement.getElementsByTagName(KEY_STAGE);
-//            System.out.println( "1" );
-//            System.out.println(this.getElementValue(nodeList.item(0)));
-//            System.out.println( "2" );
-//            System.out.println(this.getElementValue(nodeList.item(1)));
-//            System.out.println( "3" );
-
-
-
         }
-        return "";
+
+        return result;
     }
 
     /**

@@ -27,7 +27,6 @@ public class PlayView extends View {
     private Canvas canvas_play;
     private Bitmap bitmap_play;
     private Path path_play;
-    private Map<String,List<String>> points;
 
     //Player definition constants
     private int player_size = 20;
@@ -35,46 +34,23 @@ public class PlayView extends View {
     private int text_size = 30;
     private int text_shift = text_size*6/20;
 
-    //Initialize player locations
-    private static int x_1 = 400;
-    private static int y_1 = 200;
-    private static int x_2 = 100;
-    private static int y_2 = 350;
-    private static int x_3 = 700;
-    private static int y_3 = 350;
-    private static int x_4 = 250;
-    private static int y_4 = 500;
-    private static int x_5 = 550;
-    private static int y_5 = 500;
+    //Define initial player positions
+    private static int PLAYER_COUNT = 5;
+    private static int[] INITIAL_X = new int[] {400, 100, 700, 250, 550};
+    private static int[] INITIAL_Y = new int[] {200, 350, 350, 500, 500};
+    public Player[] players = new Player[PLAYER_COUNT];
+    private Map<String,List<String>> points;
 
-    public player player_1 = new player(x_1, y_1, "1", false);
-    public player player_2 = new player(x_2, y_2, "2", false);
-    public player player_3 = new player(x_3, y_3, "3", false);
-    public player player_4 = new player(x_4, y_4, "4", false);
-    public player player_5 = new player(x_5, y_5, "5", false);
-
-
+    //Instantiate view
     public PlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setupDrawing();
-        //text_summary = (TextView)findViewById(R.id.summary_info);
-        //text_summary.setText("testing");
-
-        //paint_circle = new Paint();
-        //paint_circle.setStyle(Paint.Style.FILL);
-        //paint_circle.setColor(Color.BLUE);
-
-
-        //image_court = (ImageView)findViewById(R.id.court);
-        //image_play = (ImageView)findViewById(R.id.play);
-
-
     }
 
+    //Set up hash map to store position information
     public void setupDataPoints(Map<String,List<String>> points){
         this.points = points;
     }
-
 
     private void setupDrawing(){
         //Define circle format
@@ -90,6 +66,7 @@ public class PlayView extends View {
         Typeface tf = Typeface.create("Helvetica", Typeface.BOLD);
         paint_text.setTypeface(tf);
 
+        //Define path format
         paint_path = new Paint();
         paint_path.setColor(getResources().getColor(R.color.husky_metallic_gold));
         paint_path.setAntiAlias(true);
@@ -100,145 +77,132 @@ public class PlayView extends View {
 
         //
         paint_canvas = new Paint(Paint.DITHER_FLAG);
-
         path_play = new Path();
-
     }
+
+    //Create and display blank canvas
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-
         super.onSizeChanged(w, h, oldw, oldh);
         bitmap_play = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         canvas_play = new Canvas(bitmap_play);
-
-
-
-
     }
 
-    public void initial_player_insert(){
-        draw_player(player_1);
-        draw_player(player_2);
-        draw_player(player_3);
-        draw_player(player_4);
-        draw_player(player_5);
+    //Initial insertion of players onto court
+    public void initialPlayerInsert(){
+        //Repository for single XY coordinate
+        List<String> data;
+        
+        //Loop on players
+        for (int i=0; i<PLAYER_COUNT; i++) {
+            //Define player initial positions
+            String name = Integer.toString(i+1);
+            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], name, false);
+            
+            //Draw players
+            drawPlayer(players[i]);
 
-
-        List<String> data = points.get("1");
-        data.add("(" + x_1 + "," + y_1 + ")");
-        data = points.get("2");
-        data.add("(" + x_2 + "," + y_2 + ")");
-        data = points.get("3");
-        data.add("(" + x_3 + "," + y_3 + ")");
-        data = points.get("4");
-        data.add("(" + x_4 + "," + y_4 + ")");
-        data = points.get("5");
-        data.add("(" + x_5 + "," + y_5 + ")");
-
+            //Push initial positions into map
+            data = points.get(name);
+            data.add("(" + INITIAL_X + "," + INITIAL_Y + ")");
+        }
     }
-
-
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawBitmap(bitmap_play, 0, 0, paint_canvas);
         canvas.drawPath(path_play, paint_path);
-
     }
 
+    //Capture and handle touch events during play recording
     public boolean onTouchEvent(MotionEvent event) {
 
-        location location_touch = location_projected(event.getX(), event.getY());
+        //Capture touch location
+        Location locationTouch = locationProjected(event.getX(), event.getY());
 
-        player_1 = position_update(event, location_touch, player_1);
-        player_2 = position_update(event, location_touch, player_2);
-        player_3 = position_update(event, location_touch, player_3);
-        player_4 = position_update(event, location_touch, player_4);
-        player_5 = position_update(event, location_touch, player_5);
+        //Update player positions
+        for (int i=0; i<PLAYER_COUNT; i++) {
+            players[i] = positionUpdate(event,locationTouch, players[i]);
+        }
 
-
-        //canvas_play.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        //Clear the canvas
         clear_canvas();
 
-        draw_player(player_1);
-        draw_player(player_2);
-        draw_player(player_3);
-        draw_player(player_4);
-        draw_player(player_5);
+        //Draw players on canvas
+        for (int i=0; i<PLAYER_COUNT; i++) {
+            drawPlayer(players[i]);
+        }
 
+        //Draw path from most recent player move
         canvas_play.drawPath(path_play, paint_path);
 
+        //Invalidate canvas, causing it to redraw
         invalidate();
+
         return true;
     }
 
-    private void draw_player(player player){
+    //Draw individual player
+    private void drawPlayer(Player player){
         canvas_play.drawCircle(player.X, player.Y, player_size, paint_circle);
         canvas_play.drawText(player.name, player.X, player.Y + text_shift,paint_text);
     }
 
+    //Clear canvas
     public void clear_canvas(){
         canvas_play.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
     }
-    class location{
-        float X;
-        float Y;
-        location(float X_temp, float Y_temp){
-            X = X_temp;
-            Y = Y_temp;
-        }
-    }
-
-    private location location_projected(float x, float y){
+    
+    //Project location
+    private Location locationProjected(float x, float y){
         float x_projected = x;
         float y_projected = y;
-        return new location(x_projected, y_projected);
 
+        //Currently this method does nothing.
+        //It will be used if there needs to be a coordinate transformation.
+        return new Location(x_projected, y_projected);
     }
 
-    class player {
-        float X;
-        float Y;
-        String name;
-        Boolean selection_status;
 
-        player(float X_temp, float Y_temp , String name_temp, Boolean selection_status_temp){
-            X = X_temp;
-            Y = Y_temp;
-            name = name_temp;
-            selection_status = selection_status_temp;
-        }
-    }
-
-    private player position_update(MotionEvent event, location location_touch, player player) {
-        double delta_X = location_touch.X - player.X;
-        double delta_Y = location_touch.Y - player.Y;
+    //Update player position and selection status based on touch events
+    private Player positionUpdate(MotionEvent event, Location locationTouch, Player player) {
+        double delta_X = locationTouch.X - player.X;
+        double delta_Y = locationTouch.Y - player.Y;
         double distance = Math.pow(Math.pow(delta_X, 2) + Math.pow(delta_Y, 2), 0.5);
-        // List<String> data = points.get(player.name);
+
+        //Create repository points traversed by player
         List<String> data = points.get(player.name);
+
+        //Address each touch event
         switch (event.getAction()) {
+
+            //Touch DOWN
             case MotionEvent.ACTION_DOWN:
                 player.selection_status = (distance < selection_size);
                 if(player.selection_status) {
                     path_play.moveTo(player.X, player.Y);
-                    data.add("(" + player.X + "," + player.Y + ")");
+                    data.add(pointsToString(player.X, player.Y));
                 }
                 break;
+
+            //Touch MOVE
             case MotionEvent.ACTION_MOVE:
                 if(player.selection_status) {
-                    path_play.lineTo(location_touch.X, location_touch.Y);
-                    player.X=location_touch.X;
-                    player.Y=location_touch.Y;
-                    data.add("(" + player.X + "," + player.Y + ")");
+                    path_play.lineTo(locationTouch.X, locationTouch.Y);
+                    player.X=locationTouch.X;
+                    player.Y=locationTouch.Y;
+                    data.add(pointsToString(player.X, player.Y));
                 }
                 break;
+
+            //Touch UP
             case MotionEvent.ACTION_UP:
                 if(player.selection_status) {
-                    player.X=location_touch.X;
-                    player.Y=location_touch.Y;
+                    player.X=locationTouch.X;
+                    player.Y=locationTouch.Y;
                     player.selection_status = false;
                     path_play.reset();
-                    data.add("(" + player.X + "," + player.Y + ")");
+                    data.add(pointsToString(player.X, player.Y));
                 }
                 break;
             default:
@@ -246,6 +210,11 @@ public class PlayView extends View {
         }
         return player;
 
+    }
+
+    //Create string from points
+    private String pointsToString(float x, float y){
+        return "(" + Float.toString(x) + "," + Float.toString(y) + ")";
     }
 
 }
