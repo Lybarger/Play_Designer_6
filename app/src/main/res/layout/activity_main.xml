@@ -30,6 +30,19 @@
                 />
 
             <Button
+                android:id="@+id/button_delete_play"
+                android:text="@string/button_delete_play"
+                android:onClick="onClickDeletePlay"
+                android:tag="#FF660000"
+
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:layout_margin="@dimen/margin"
+                android:background="@drawable/button_shape_multistate"
+                style="@style/button_text"
+                />
+
+            <Button
                 android:id="@+id/button_create_new_play"
                 android:text="@string/button_create_new"
                 android:onClick="onClickCreateNewPlay"

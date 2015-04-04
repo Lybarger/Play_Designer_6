@@ -7,8 +7,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Environment;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,9 +18,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
@@ -35,7 +37,9 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class Main extends ActionBarActivity{
+
+public class Main extends ActionBarActivity implements MultiChoiceListDialogFragment.multiChoiceListDialogListener{
+//public class Main extends ActionBarActivity {
 
 
     private Paint paint_circle;
@@ -60,6 +64,8 @@ public class Main extends ActionBarActivity{
     private String play_as_string;
     private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "\n";
     private int currentStage = 1;
+
+    private String[] countriesArray;
 
     private Map<String,List<String>> dataPoints;
 
@@ -122,6 +128,10 @@ public class Main extends ActionBarActivity{
         dataPoints.put("4",data4);
         dataPoints.put("5",data5);
         play_view.setupDataPoints(dataPoints);
+
+
+
+
     }
 
     public boolean isExternalStorageWritable() {
@@ -234,6 +244,62 @@ public class Main extends ActionBarActivity{
 
 
     }
+
+
+
+    public void onClickDeletePlay(View view)
+    {
+        //CharSequence list="Tea";
+        String[] list = {"Cheese", "Pepperoni", "Black Olives"};
+        //CharSequence list[]={ "Dr PepperTea", "PepsiCoffee", "Coca-ColaMilk" };
+        System.out.println( "here it is" );
+        System.out.println( list );
+
+        File dir = getFilesDir();
+        File[] file_list = dir.listFiles();
+        final String[] filename_list = dir.list();
+        System.out.println( filename_list );
+
+        Bundle bundle = new Bundle();
+        String myMessage = "Stackoverflow is cool!";
+        bundle.putStringArray("list", filename_list);
+
+
+
+        //DialogFragment dialog = MultiChoiceListDialogFragment.newInstance(list);
+        DialogFragment dialog = new MultiChoiceListDialogFragment();
+        dialog.setArguments(bundle);
+
+
+        //getList()
+
+        //include a tag to identify the fragment
+        dialog.show(getSupportFragmentManager(),
+                "MultiChoiceListDialogFragment");
+
+    }
+
+    @Override
+    public void onOkay(ArrayList<Integer> arrayList) {
+        StringBuilder stringBuilder = new StringBuilder();
+        /*if (arrayList.size() != 0) {
+            for (int i = 0; i < arrayList.size(); i++) {
+                String country = countriesArray[arrayList.get(i)];
+                stringBuilder = stringBuilder.append(" " + country);
+            }
+            Toast.makeText(this, "You have selected: "
+                    + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
+        }*/
+        Toast.makeText(this, "onOkaySelected", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onCancel() {
+        Toast.makeText(this, "You have cancelled the dialog", Toast.LENGTH_SHORT).show();
+    }
+
+
+
     public void onClickCreateNewPlay(View view)
     {
 
