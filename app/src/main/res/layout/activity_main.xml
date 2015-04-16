@@ -17,8 +17,8 @@
             android:orientation="vertical" >
 
             <Button
-                android:id="@+id/button_play_existing"
-                android:text="@string/button_play_existing"
+                android:id="@+id/buttonPlayExisting"
+                android:text="@string/buttonPlayExisting"
                 android:onClick="onClickPlayExisting"
                 android:tag="#FF660000"
 
@@ -30,8 +30,8 @@
                 />
 
             <Button
-                android:id="@+id/button_delete_play"
-                android:text="@string/button_delete_play"
+                android:id="@+id/buttonRemovePlay"
+                android:text="@string/buttonRemovePlay"
                 android:onClick="onClickDeletePlay"
                 android:tag="#FF660000"
 
@@ -43,8 +43,8 @@
                 />
 
             <Button
-                android:id="@+id/button_create_new_play"
-                android:text="@string/button_create_new"
+                android:id="@+id/buttonCreateNewPlay"
+                android:text="@string/buttonCreateNewPlay"
                 android:onClick="onClickCreateNewPlay"
                 android:tag="#FF660000"
 
@@ -58,8 +58,8 @@
 
 
             <Button
-                android:id="@+id/button_initialization_complete"
-                android:text="@string/button_initialization_complete"
+                android:id="@+id/buttonInitializationComplete"
+                android:text="@string/buttonInitializationComplete"
                 android:onClick="onClickInitializationComplete"
                 android:tag="#FFFF6600"
 
@@ -71,8 +71,8 @@
                 />
 
             <Button
-                android:id="@+id/button_increment_stage"
-                android:text="@string/button_increment_stage"
+                android:id="@+id/buttonIncrementStage"
+                android:text="@string/buttonIncrementStage"
                 android:onClick="onClickIncrementStage"
                 android:tag="#FFFF0000"
 
@@ -85,8 +85,8 @@
 
 
             <Button
-                android:id="@+id/button_play_complete"
-                android:text="@string/button_play_complete"
+                android:id="@+id/buttonPlayComplete"
+                android:text="@string/buttonPlayComplete"
                 android:onClick="onClickPlayComplete"
                 android:tag="#FFFFCC00"
 
@@ -113,7 +113,6 @@
                     android:layout_height="600dp"
                     android:background="@drawable/half_court_cropped"
                     />
-
         </LinearLayout>
 
 

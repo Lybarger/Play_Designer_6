@@ -35,52 +35,61 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import android.util.Log;
 
 
 
-public class Main extends ActionBarActivity implements MultiChoiceListDialogFragment.multiChoiceListDialogListener{
+public class Main extends ActionBarActivity implements MultiChoiceListDialogFragment.multiChoiceListDialogListener, SingleChoiceListDialogFragment.singleChoiceListDialogListener {
 //public class Main extends ActionBarActivity {
-
+    private static final String TAG = Main.class.getSimpleName();
 
     private Paint paint_circle;
     private ImageView image_court, image_play;
     private Canvas canvas_play;
     private Bitmap bitmap_play;
-    private PlayView play_view;
-    private TextView text_status;
+    private PlayView playView;
 
-    private final states state_list = new states("","", "", "", "");
+    private TextView text_status;
+    private Bitmap canvasBitmap;
+
+    private final AppStates state_list = new AppStates("","", "", "", "");
     private String current_state;
-    private Button button_play_existing;
-    private Button button_create_new;
-    private Button button_initialization_complete;
-    private Button button_increment_stage;
-    private Button button_play_complete;
-    private TextView text_play_name;
-    private TextView text_initialization;
-    private TextView textCurrentStage;
+
+    //Buttons
+    private Button buttonPlaysExisting, buttonRemovePlay, buttonCreateNew;
+    private Button buttonInitializationComplete, buttonIncrementStage, buttonPlayComplete;
+
+    //TextViews
+    private TextView text_play_name, text_initialization, textCurrentStage;
     private TextView text_play_complete;
+
+    //Strings
     private String play_filename;
     private String play_as_string;
     private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "\n";
+
+    //Integers
     private int currentStage = 1;
+    private static int PLAYER_COUNT = 5;
+    private static int POINT_PER_STAGE = 100;
 
-    private String[] countriesArray;
 
+    //Other
     private Map<String,List<String>> dataPoints;
+    private String fileToLoad;
+
+    private String[] playAsArray;
+    private String playAsString;
 
 
 
-
-    //canvas bitmap
-
-    private Bitmap canvasBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String folder_main = "play_designer";
+        //
+/*        String folder_main = "play_designer";
 
         File f = new File(Environment.getExternalStorageDirectory(),
                 folder_main);
@@ -88,59 +97,50 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
             f.mkdirs();
         }
         Boolean check = isExternalStorageWritable();
-        System.out.println("EXTERNAL CHECK:" + check);
+        System.out.println("EXTERNAL CHECK:" + check);*/
 
-
+        //Load court view
         setContentView(R.layout.activity_main);
+        playView = (PlayView)findViewById(R.id.play);
 
-        play_view = (PlayView)findViewById(R.id.play);
 
         //Define buttons
-        button_play_existing = (Button)findViewById(R.id.button_play_existing);
-        button_create_new = (Button)findViewById(R.id.button_create_new_play);
-        button_initialization_complete = (Button)findViewById(R.id.button_initialization_complete);
-        button_increment_stage = (Button)findViewById(R.id.button_increment_stage);
-        button_play_complete = (Button)findViewById(R.id.button_play_complete);
+        buttonPlaysExisting = (Button)findViewById(R.id.buttonPlayExisting);
+        buttonRemovePlay = (Button)findViewById(R.id.buttonRemovePlay);
+        buttonCreateNew = (Button)findViewById(R.id.buttonCreateNewPlay);
+        buttonInitializationComplete = (Button)findViewById(R.id.buttonInitializationComplete);
+        buttonIncrementStage = (Button)findViewById(R.id.buttonIncrementStage);
+        buttonPlayComplete = (Button)findViewById(R.id.buttonPlayComplete);
 
-        //Defined texts
+        //Define TextViews
         text_play_name = (TextView)findViewById(R.id.value_play_name);
         text_initialization = (TextView)findViewById(R.id.value_initialization);
         textCurrentStage = (TextView)findViewById(R.id.value_increment);
         text_play_complete = (TextView)findViewById(R.id.value_play_complete);
 
-
         //Define current state
         current_state= state_list.SPLASH;
         updateButtonState(current_state);
 
-
-        //onViewChange();
+        //Create hash map for points
         dataPoints = new HashMap<String,List<String>>();
-        List<String> data1 = new ArrayList<String>();
-        List<String> data2 = new ArrayList<String>();
-        List<String> data3 = new ArrayList<String>();
-        List<String> data4 = new ArrayList<String>();
-        List<String> data5 = new ArrayList<String>();
+        for (int i=0; i<PLAYER_COUNT; i++) {
+            List<String> data = new ArrayList<String>();
+            String name = Integer.toString(i+1);
+            dataPoints.put(name, data);
+        }
+        playView.setupDataPoints(dataPoints);
 
-        dataPoints.put("1",data1);
-        dataPoints.put("2",data2);
-        dataPoints.put("3",data3);
-        dataPoints.put("4",data4);
-        dataPoints.put("5",data5);
-        play_view.setupDataPoints(dataPoints);
-
-
-
-
+        // playView.initialPlayerInsert();
     }
 
-    public boolean isExternalStorageWritable() {
+/*    public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             return true;
         }
         return false;
-    }
+    }*/
 
     public void printMap(){
         Set<String> keys = dataPoints.keySet();
@@ -153,6 +153,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         }
     }
 
+    //Clear hash map
     public void mapClear(){
         Set<String> keys = dataPoints.keySet();
         for (String key : keys){
@@ -161,6 +162,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         }
     }
 
+    //Extract last value from hash map
     public void mapLastValue(){
         Set<String> keys = dataPoints.keySet();
         for (String key : keys){
@@ -168,15 +170,12 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
             String last_entry = points.get(points.size()-1);
             points.clear();
             points.add(last_entry);
-
         }
-
     }
 
-    public void onViewChange(){
+/*    public void onViewChange(){
         text_status.setText("I hope partial success");
-
-    }
+    }*/
 
 
     @Override
@@ -201,48 +200,61 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         return super.onOptionsItemSelected(item);
     }
 
-    class states {
-        String SPLASH;
-        String REPLAY;
-        String INITIALIZING;
-        String INCREMENTING;
-        String COMPLETE;
-        states(String SPLASH_1, String REPLAY_1, String INITIALIZING_1, String INCREMENTING_1, String COMPLETE_1) {
-            SPLASH = "SPLASH";
-            REPLAY = "REPLAY";
-            INITIALIZING = "INITIALIZING";
-            INCREMENTING = "INCREMENTING";
-            COMPLETE = "COMPLETE";
-        }
+/*    public void onTest(View view) {
+//        textCurrentStage.setText("SLDKFJSKDJF");
+//        playView.initialPlayerInsert();
+//        playView.invalidate();
+//        playPlay("qq.XML");
+//        playView.invalidate();
+        new Thread(new Runnable() {
+            public void run() {
+                playView.post(new Runnable() {
+                    public void run () {
+                        for (int pointIndex = 0; pointIndex < 20; pointIndex++) {
+                            playView.temporary();
+                        }
+                    }
+                });
+            }
 
-    }
+        }).start();
 
+    }*/
+
+    //Handle Play Existing button click event
     public void onClickPlayExisting(View view)
     {
-        current_state= state_list.REPLAY;
-        updateButtonState(current_state);
+
+        //setContentView(R.layout.activity_main);
+        //animatedBoxView = (AnimatedBoxView).findViewById(R.id.play);
+                //CharSequence list="Tea";
 
         File dir = getFilesDir();
-        File[] file_list = dir.listFiles();
-        final String[] filename_list = dir.list();
-        System.out.println( filename_list );
+        //File[] file_list = dir.listFiles();
+        String[] filenameList = dir.list();
+        System.out.println( filenameList );
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Make your selection");
-        builder.setItems(filename_list, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int item) {
-                // Do something with the selection
-            String fileToPlay=filename_list[item];
-            playPlay(fileToPlay);
-            }
-        });
-        AlertDialog alert = builder.create();
-        alert.show();
+        Bundle bundle = new Bundle();
+        bundle.putStringArray("list", filenameList);
+
+
+        //DialogFragment dialog = SingleChoiceListDialogFragment.newInstance(list);
+        DialogFragment dialog = new SingleChoiceListDialogFragment();
+        dialog.setArguments(bundle);
+
+
+        //include a tag to identify the fragment
+         dialog.show(getSupportFragmentManager(),
+                 "SingleChoiceListDialogFragment");
+
+
+        //Update current state
         current_state= state_list.SPLASH;
         updateButtonState(current_state);
 
+//         playPlay(fileToLoad);*/
 
-
+        // playView.temporary();
     }
 
 
@@ -250,19 +262,14 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     public void onClickDeletePlay(View view)
     {
         //CharSequence list="Tea";
-        String[] list = {"Cheese", "Pepperoni", "Black Olives"};
-        //CharSequence list[]={ "Dr PepperTea", "PepsiCoffee", "Coca-ColaMilk" };
-        System.out.println( "here it is" );
-        System.out.println( list );
 
         File dir = getFilesDir();
-        File[] file_list = dir.listFiles();
-        final String[] filename_list = dir.list();
-        System.out.println( filename_list );
+        //File[] file_list = dir.listFiles();
+        String[] filenameList = dir.list();
+        System.out.println( filenameList );
 
         Bundle bundle = new Bundle();
-        String myMessage = "Stackoverflow is cool!";
-        bundle.putStringArray("list", filename_list);
+        bundle.putStringArray("list", filenameList);
 
 
 
@@ -280,25 +287,67 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     }
 
     @Override
-    public void onOkay(ArrayList<Integer> arrayList) {
+    public void multipleChoiceOnOkay(ArrayList<Integer> arrayList) {
+        File directory = getFilesDir();
+        //File[] file_list = dir.listFiles();
+        String[] filenameList = directory.list();
         StringBuilder stringBuilder = new StringBuilder();
-        /*if (arrayList.size() != 0) {
+        if (arrayList.size() != 0) {
             for (int i = 0; i < arrayList.size(); i++) {
-                String country = countriesArray[arrayList.get(i)];
-                stringBuilder = stringBuilder.append(" " + country);
+                String fileToRemove = filenameList[arrayList.get(i)];
+
+
+                deleteFile(fileToRemove);
+                Log.d(TAG, "Deleted file: " + fileToRemove);
+
+                stringBuilder = stringBuilder.append(" " + fileToRemove);
             }
-            Toast.makeText(this, "You have selected: "
+            Toast.makeText(this, "Deleted files: "
                     + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
-        }*/
-        Toast.makeText(this, "onOkaySelected", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     @Override
-    public void onCancel() {
-        Toast.makeText(this, "You have cancelled the dialog", Toast.LENGTH_SHORT).show();
+    public void multipleChoiceOnCancel() {
+        Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
     }
 
 
+    @Override
+    public void singleChoiceOnOkay(int selectedItemIndex) {
+        File directory = getFilesDir();
+        //File[] file_list = dir.listFiles();
+        String[] filenameList = directory.list();
+        StringBuilder stringBuilder = new StringBuilder();
+//         if (selectedItemIndex.hasValue) {
+//             for (int i = 0; i < arrayList.size(); i++) {
+                String fileToPlay = filenameList[selectedItemIndex];
+
+
+                //deleteFile(fileToRemove);
+                Log.d(TAG, "File to play: " + fileToPlay);
+
+                stringBuilder = stringBuilder.append(" " + fileToPlay);
+// // dental            }
+            Toast.makeText(this, "File to play: "
+                     + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
+
+        playPlay(fileToPlay);
+
+//         }
+//         else {
+//             Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
+//         }
+
+    }
+    @Override
+    public void singleChoiceOnCancel() {
+        Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
+    }
 
     public void onClickCreateNewPlay(View view)
     {
@@ -330,11 +379,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         alert.show();
 
-        play_view.initialPlayerInsert();
+        playView.initialPlayerInsert();
         play_as_string = xml_header + "<play>";
-
-
-
     }
 
     public void onClickInitializationComplete(View view)
@@ -344,29 +390,31 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         updateButtonState(current_state);
         currentStage=1;
         textCurrentStage.setText(Integer.toString(currentStage));
+
         mapLastValue();
     }
 
     public void onClickIncrementStage(View view)
     {
-        concatenateStage();
+        play_as_string = concatenateStage(play_as_string);
+        System.out.println(play_as_string);
         currentStage++;
         textCurrentStage.setText(Integer.toString(currentStage));
-
-
         mapClear();
 
 
     }
 
+
+
     public void onClickPlayComplete(View view)
     {
         text_play_complete.setText("complete");
         current_state= state_list.COMPLETE;
-        play_view.clear_canvas();
+        playView.clear_canvas();
         //concatenateStage();
         updateButtonState(current_state);
-        concatenateStage();
+        play_as_string = concatenateStage(play_as_string);
         mapClear();
         // System.out.println(play_as_string);
         play_as_string= play_as_string + "</play>";
@@ -376,46 +424,52 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     }
 
 
+
     public void updateButtonState(String current_state) {
         if (current_state == state_list.SPLASH) {
             //Set the button_shape_enabled state
-            button_play_existing.setEnabled(true);
-            button_create_new.setEnabled(true);
-            button_initialization_complete.setEnabled(false);
-            button_increment_stage.setEnabled(false);
-            button_play_complete.setEnabled(false);
+            buttonPlaysExisting.setEnabled(true);
+            buttonRemovePlay.setEnabled(true);
+            buttonCreateNew.setEnabled(true);
+            buttonInitializationComplete.setEnabled(false);
+            buttonIncrementStage.setEnabled(false);
+            buttonPlayComplete.setEnabled(false);
         }
         else if (current_state == state_list.REPLAY) {
             //Set the button_shape_enabled state
-            button_play_existing.setEnabled(false);
-            button_create_new.setEnabled(false);
-            button_initialization_complete.setEnabled(false);
-            button_increment_stage.setEnabled(false);
-            button_play_complete.setEnabled(false);
+            buttonPlaysExisting.setEnabled(false);
+            buttonRemovePlay.setEnabled(false);
+            buttonCreateNew.setEnabled(false);
+            buttonInitializationComplete.setEnabled(false);
+            buttonIncrementStage.setEnabled(false);
+            buttonPlayComplete.setEnabled(false);
         }
         else if (current_state == state_list.INITIALIZING){
             //Set the button_shape_enabled state
-            button_play_existing.setEnabled(false);
-            button_create_new.setEnabled(false);
-            button_initialization_complete.setEnabled(true);
-            button_increment_stage.setEnabled(false);
-            button_play_complete.setEnabled(false);
+            buttonPlaysExisting.setEnabled(false);
+            buttonRemovePlay.setEnabled(false);
+            buttonCreateNew.setEnabled(false);
+            buttonInitializationComplete.setEnabled(true);
+            buttonIncrementStage.setEnabled(false);
+            buttonPlayComplete.setEnabled(false);
         }
         else if (current_state == state_list.INCREMENTING){
             //Set the button_shape_enabled state
-            button_play_existing.setEnabled(false);
-            button_create_new.setEnabled(false);
-            button_initialization_complete.setEnabled(false);
-            button_increment_stage.setEnabled(true);
-            button_play_complete.setEnabled(true);
+            buttonPlaysExisting.setEnabled(false);
+            buttonRemovePlay.setEnabled(false);
+            buttonCreateNew.setEnabled(false);
+            buttonInitializationComplete.setEnabled(false);
+            buttonIncrementStage.setEnabled(true);
+            buttonPlayComplete.setEnabled(true);
         }
         else if (current_state == state_list.COMPLETE){
             //Set the button_shape_enabled state
-            button_play_existing.setEnabled(true);
-            button_create_new.setEnabled(true);
-            button_initialization_complete.setEnabled(false);
-            button_increment_stage.setEnabled(false);
-            button_play_complete.setEnabled(false);
+            buttonPlaysExisting.setEnabled(true);
+            buttonRemovePlay.setEnabled(true);
+            buttonCreateNew.setEnabled(true);
+            buttonInitializationComplete.setEnabled(false);
+            buttonIncrementStage.setEnabled(false);
+            buttonPlayComplete.setEnabled(false);
         }
     }
 
@@ -466,7 +520,13 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
     }
     //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
-    public void concatenateStage() {
+    public String concatenateStage(String stage) {
+
+        for (int i=0; i<PLAYER_COUNT; i++) {
+            System.out.println("concatenate stage: " + dataPoints.get(Integer.toString(i)));
+        }
+
+
         String format =
             "<stage>" + "\n" +
                 "<player>" + "\n" +
@@ -491,37 +551,31 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                 "</player>" + "\n" +
             "</stage>" + "\n"
             ;
-         play_as_string = play_as_string + String.format(format,
+
+         return stage + String.format(format,
                 dataPoints.get("1"),
                 dataPoints.get("2"),
                 dataPoints.get("3"),
                 dataPoints.get("4"),
                 dataPoints.get("5"));
-
-
     }
 
     public void playPlay(String filename){
-        System.out.println( filename );
-        String string_read = readFromFile(filename);
-//         System.out.println(" BREAK");
-        System.out.println(string_read);
 
-        //http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
+        // XML parser based on tutorial found at:
+        //      http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
+
+        // Replay as XML
+        String playAsXml = readFromFile(filename);
+
+        // Create instance of XML parser
         XMLParser parser = new XMLParser();
-        String xml = string_read; // getting XML
-        Document doc = parser.getDomElement(xml); // getting DOM element
 
-        String KEY_STAGE = "stage";
-        String KEY_PLAYER = "player";
-        String KEY_INDEX= "stage_number";
-        String KEY_XY="xy";
-        NodeList nl = doc.getElementsByTagName(KEY_STAGE);
-        System.out.println(nl.getLength());
-        Map<String,String> output = parser.getStage(xml, 0);
-        System.out.println( output );
-        Map<String,String> output1 = parser.getStage(xml, 1);
-        System.out.println( output1 );
+        // Parse XML play into map
+        Map<String,List<String>> currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
+
+        // Send play to view for playing
+        playView.startPlay(currentPlay);
 
     }
 }

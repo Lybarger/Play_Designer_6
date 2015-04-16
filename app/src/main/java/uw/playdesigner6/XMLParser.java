@@ -6,6 +6,7 @@ package uw.playdesigner6;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,33 +116,42 @@ public class XMLParser {
         }
         return "";
     }
-    public Map<String,String> getStage(String XML, int stageNumber){
+   // public Map<String,String> getStage(String XML, int stageNumber){
+    public Map<String,List<String>> getPlay(String XML, int playerCount){
+
+        // XML node names
         final String KEY_STAGE = "stage";
         final String KEY_PLAYER = "player";
         final String KEY_STAGE_NUMBER= "stage_number";
         final String KEY_XY="xy";
         final String KEY_ID="id";
-        Map<String, String> result = new HashMap<String, String >();
 
+        // Create hashmap repository
+        Map<String, List<String>> result = new HashMap<String,List<String>>();
+        for (int i=0; i<playerCount; i++) {
+            List<String> data = new ArrayList<String>();
+            String name = Integer.toString(i+1);
+            result.put(name, data);
+        }
 
+        // XML nodes
         Node child;
         Node grandchild;
 
+        // Get XML as document
         Document document = getDomElement(XML);
 
         //Get list of all STAGES
         NodeList stageList = document.getElementsByTagName(KEY_STAGE);
-
         int stageCount =stageList.getLength();
 
-        boolean stageRemaining=stageNumber <= stageCount-1;
-
         //Loop through each STAGE
-        if (stageRemaining) {
-            //for (int i = 0; i < stageList.getLength(); i++) {
-            System.out.println("Current stage: " + String.valueOf(stageNumber));
+        for (int i = 0; i < stageList.getLength(); i++) {
+
+            //System.out.println("Current stage: " + String.valueOf(stageNumber));
+
             //Current STAGE node
-            Node currentItem = stageList.item(stageNumber);
+            Node currentItem = stageList.item(i);
 
             //Current STAGE element
             Element currentElement = (Element) currentItem;
@@ -155,26 +165,48 @@ public class XMLParser {
                     //Loop through children within STAGE
                     int j = 0;
                     for (child = currentElement.getFirstChild(); child != null; child = child.getNextSibling()) {
-
-                        j++;
+                        // Get child as element
                         Element childElement = (Element) child;
+
+                        // Get name of child element
                         String childName = childElement.getNodeName();
 
-                        System.out.println("Child: " + String.valueOf(j) + " " + childName);
-
-                        System.out.println(getValue(childElement, KEY_ID));
-                        System.out.println(getValue(childElement, KEY_XY));
-
+                        // Get ID of child (Player number)
                         String idValue=getValue(childElement, KEY_ID);
+
+                        // Get XY coordinates for ID (player)
                         String xyValue=getValue(childElement, KEY_XY);
-                        result.put(idValue,xyValue);
+
+                        // Push ID and XY coordinates into map
+                        result.get(idValue).add(xyValue);
+
+                        //j++;
+
+
+/*                        System.out.println("Child: " + String.valueOf(j) + " " + childName);
+
+*/
+//                        System.out.println( "XML parser" );
+
+//                        System.out.println(idValue);
+//                        System.out.println(xyValue);
+
+
+
+//                        System.out.println(result.get(idValue));
+                        //result.put(idValue,xyValue);
 
                     }
                 }
             }
-        }
 
+        }
         return result;
+       /* else{
+            return null;
+        }*/
+
+
     }
 
     /**

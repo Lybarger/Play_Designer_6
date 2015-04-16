@@ -1,7 +1,6 @@
 package uw.playdesigner6;
 
 
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -10,28 +9,27 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
- * Created by lybar_000 on 4/3/2015.
+ *
+ * Created by lybar_000 on 4/10/2015.
  */
-
-public class MultiChoiceListDialogFragment extends DialogFragment {
+public class SingleChoiceListDialogFragment extends DialogFragment {
 
     /*array list to save the indexes of the selected array items*/
-    private ArrayList<Integer> selectedItemsIndexList;
+    public int selectedItemIndex;
+
 
 
     /*the interface to communicate with the host activity*/
-    public interface multiChoiceListDialogListener {
-        public void multipleChoiceOnOkay(ArrayList<Integer> arrayList);
+    public interface singleChoiceListDialogListener {
+        public void singleChoiceOnOkay(int selectedItemIndex);
 
-        public void multipleChoiceOnCancel();
+        public void singleChoiceOnCancel();
 
     }
 
     // Define listener variable
-    multiChoiceListDialogListener dialogListener;
+    singleChoiceListDialogListener dialogListener;
 
     @Override
     public void onAttach(Activity activity) {
@@ -39,11 +37,11 @@ public class MultiChoiceListDialogFragment extends DialogFragment {
         // ensure that the host activity implements the callback interface
         try {
             // Instantiate the dialogListener so we can send events to the host
-            dialogListener = (multiChoiceListDialogListener) activity;
+            dialogListener = (singleChoiceListDialogListener) activity;
         } catch (ClassCastException e) {
             // if activity doesn't implement the interface, throw an exception
             throw new ClassCastException(activity.toString()
-                    + " must implement multiChoiceListDialogListener");
+                    + " must implement singleChoiceListDialogListener");
         }
     }
 
@@ -60,10 +58,11 @@ public class MultiChoiceListDialogFragment extends DialogFragment {
         CharSequence[] itemList = list;
 
         // Create repository for list of selected items indexes
-        selectedItemsIndexList = new ArrayList();
+//         selectedItemsIndex = new int;
 
         // Create logical array indicating whether or not the item is selected
         boolean[] isSelectedArray = new boolean[itemList.length];
+        int checkedItem;
 
         // Create new alert dialogue
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -72,36 +71,42 @@ public class MultiChoiceListDialogFragment extends DialogFragment {
         builder.setTitle(R.string.titleSelectFileToPlay)
 
                 // Specify the list array, multiple-choice list
-                .setMultiChoiceItems(itemList, isSelectedArray,
-                        new DialogInterface.OnMultiChoiceClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which,
-                                                boolean isChecked) {
-                                if (isChecked) {
+                //.setMultiChoiceItems(itemList, isSelectedArray,
+                //        new DialogInterface.OnMultiChoiceClickListener() {
+                .setSingleChoiceItems(itemList, 0,
+                         new DialogInterface.OnClickListener() {
+                             @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                /*if (isChecked) {
                                     // If the user checked the item,
                                     // add it to the selected items list
                                     selectedItemsIndexList.add(which);
                                 } else if (selectedItemsIndexList.contains(which)) {
                                     // Else, if the item is already in the list, remove it
                                     selectedItemsIndexList.remove(Integer.valueOf(which));
-                                }
+                                }*/
+                                 selectedItemIndex = which;
+                                 System.out.println(which);
+
+
                             }
                         })
 
-                // Set the action buttons
+                        // Set the action buttons
                 .setPositiveButton(R.string.buttonOkay, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         // User clicked OK, so pass the selectedItemsIndexList
                         // results to the host activity
-                        dialogListener.multipleChoiceOnOkay(selectedItemsIndexList);
+                        dialogListener.singleChoiceOnOkay(selectedItemIndex);
+
                     }
                 })
 
                 .setNegativeButton(R.string.buttonCancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-                        dialogListener.multipleChoiceOnCancel();
+                        dialogListener.singleChoiceOnCancel();
                     }
                 });
 

@@ -7,19 +7,17 @@
     <string name="button_record_new">Record New Play</string>
 
 
-    <string name="button_play_existing">Play Existing</string>
-    <string name="button_delete_play">Delete Plays</string>
-    <string name="button_create_new">Create New</string>
-    <string name="button_initialization_complete">Initialization Complete</string>
-    <string name="button_increment_stage">Increment Stage</string>
-    <string name="button_play_complete">Play Complete</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
-    <string name="select_file"> Select file</string>
-    <string-array name="temporary_list">
-        <item>Red</item>
-        <item>Green</item>
-        <item>Blue</item>
-    </string-array>
+    <string name="buttonPlayExisting">Play Existing</string>
+    <string name="buttonRemovePlay">Delete Plays</string>
+    <string name="buttonCreateNewPlay">Create New</string>
+    <string name="buttonInitializationComplete">Initialization Complete</string>
+    <string name="buttonIncrementStage">Increment Stage</string>
+    <string name="buttonPlayComplete">Play Complete</string>
+
+
+    <string name="buttonOkay">OK</string>
+    <string name="buttonCancel">Cancel</string>
+    <string name="titleSelectFileToPlay">Select play</string>
+    <string name="titleSelectFileToRemove">Select plays to delete</string>
 
 </resources>
