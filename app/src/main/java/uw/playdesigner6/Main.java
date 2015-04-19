@@ -204,7 +204,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 //        textCurrentStage.setText("SLDKFJSKDJF");
 //        playView.initialPlayerInsert();
 //        playView.invalidate();
-//        playPlay("qq.XML");
+//        readPlayFromFile("qq.XML");
 //        playView.invalidate();
         new Thread(new Runnable() {
             public void run() {
@@ -340,7 +340,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
              + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
 
         // Call method to load and replay play
-        playPlay(fileToPlay);
+        readPlayFromFile(fileToPlay);
     }
     @Override
     public void singleChoiceOnCancel() {
@@ -512,6 +512,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     // Write play to XML file
     public void writeToFile(String filename, String string){
         /* Checks if external storage is available for read and write */
+        System.out.println(string);
 
         FileOutputStream outputStream;
 
@@ -563,7 +564,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     }
 
     // Replay play
-    public void playPlay(String filename){
+    public void readPlayFromFile(String filename){
 
         // XML parser based on tutorial found at:
         //      http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
