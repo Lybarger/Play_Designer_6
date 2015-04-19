@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,8 +37,6 @@ import org.xml.sax.SAXException;
 import android.util.Log;
 
 public class XMLParser {
-
-
 
 
     // constructor
@@ -116,8 +116,17 @@ public class XMLParser {
         }
         return "";
     }
-   // public Map<String,String> getStage(String XML, int stageNumber){
-    public Map<String,List<String>> getPlay(String XML, int playerCount){
+
+
+   // Read play from XML file
+    public Map<Integer,List<List<float[]>>> getPlay(String XML, int playerCount){
+// public Map<String,List<String>> getPlay(String XML, int playerCount){
+// public Map<String,String> getStage(String XML, int stageNumber){
+        // Data format
+        // Key: player number (1-5)
+        // Outer list: stage
+        // Inner list: X and Y coordinates of stage, stored as array
+        // Numeric array, float[]: [X, Y]
 
         // XML node names
         final String KEY_STAGE = "stage";
@@ -127,12 +136,11 @@ public class XMLParser {
         final String KEY_ID="id";
 
         // Create hashmap repository
-        Map<String, List<String>> result = new HashMap<String,List<String>>();
-        for (int i=0; i<playerCount; i++) {
-            List<String> data = new ArrayList<String>();
-            String name = Integer.toString(i+1);
-            result.put(name, data);
-        }
+        Map<Integer,List<List<float[]>>> result = new HashMap<Integer,List<List<float[]>>>();
+
+
+        // Map<String, List<String>> result = new HashMap<String,List<String>>();
+
 
         // XML nodes
         Node child;
@@ -145,10 +153,17 @@ public class XMLParser {
         NodeList stageList = document.getElementsByTagName(KEY_STAGE);
         int stageCount =stageList.getLength();
 
+        for (int playerIndex=1; playerIndex <= playerCount; playerIndex++) {
+
+            // Create new outer list, stage level information per player
+            List<List<float[]>> outerList = new ArrayList<List<float[]>>();
+
+            // String name = Integer.toString(i+1);
+            result.put(playerIndex, outerList);
+        }
+
         //Loop through each STAGE
         for (int i = 0; i < stageList.getLength(); i++) {
-
-            //System.out.println("Current stage: " + String.valueOf(stageNumber));
 
             //Current STAGE node
             Node currentItem = stageList.item(i);
@@ -172,30 +187,18 @@ public class XMLParser {
                         String childName = childElement.getNodeName();
 
                         // Get ID of child (Player number)
-                        String idValue=getValue(childElement, KEY_ID);
+                        String idValueAsString=getValue(childElement, KEY_ID);
+                        int idValue = Integer.valueOf(idValueAsString);
+                        System.out.println(idValue);
 
                         // Get XY coordinates for ID (player)
-                        String xyValue=getValue(childElement, KEY_XY);
+                        String coordinatesAsString=getValue(childElement, KEY_XY);
+                        System.out.println(coordinatesAsString);
 
-                        // Push ID and XY coordinates into map
-                        result.get(idValue).add(xyValue);
-
-                        //j++;
-
-
-/*                        System.out.println("Child: " + String.valueOf(j) + " " + childName);
-
-*/
-//                        System.out.println( "XML parser" );
-
-//                        System.out.println(idValue);
-//                        System.out.println(xyValue);
-
-
-
-//                        System.out.println(result.get(idValue));
-                        //result.put(idValue,xyValue);
-
+                        List<float[]> innerList = new ArrayList<float[]>();
+                        innerList = parseCoordinates(coordinatesAsString);
+                        List<List<float[]>> outerList = result.get(idValue);
+                        outerList.add(innerList);
                     }
                 }
             }
@@ -206,9 +209,99 @@ public class XMLParser {
             return null;
         }*/
 
-
     }
 
+    // Parse strings containing coordinates into a list of float array
+    private List<float[]> parseCoordinates(String coordinatesAsString){
+
+        List<float[]> output = new ArrayList<float[]>();
+
+        // Determine if coordinates are present
+        boolean coordinatesPresent = !coordinatesAsString.equals("'[]'");
+
+        if (coordinatesPresent){
+
+            // Remove single quotes and brackets
+            Pattern p = Pattern.compile("[\\['\\]]");
+            Matcher m = p.matcher(coordinatesAsString);
+            coordinatesAsString = m.replaceAll("");
+
+            // Split string into array
+            // (?<=\\)) positive lookbehind means that it must be preceded by )
+            // (?=\\() positive lookahead means that it must be suceeded by (
+            // (,\\s*) means that it must be splitted on the , and any space after that
+            String[] coordinatesAsStringArray = coordinatesAsString.split("(?<=\\))(,\\s*)(?=\\()");
+
+            // Pattern for removing parentheses
+            p = Pattern.compile("[\\(\\)]");
+
+            int coordinateCount = coordinatesAsStringArray.length;
+
+            // Loop on pairs of coordinates
+            for (int i = 0; i < coordinateCount; i++) {
+                // Set of coordinates in format (x,y)
+                String[] currentCoordinate = coordinatesAsStringArray[i].split(",\\s*");
+
+                // Extract x-coordinate as float, note that leading ( is removed
+                m = p.matcher(currentCoordinate[0]);
+                float x = Float.parseFloat(m.replaceAll(""));
+
+                // Extract y-coordinate as float, note that leading ) is removed
+                m = p.matcher(currentCoordinate[1]);
+                float y = Float.parseFloat(m.replaceAll(""));
+
+                //System.out.println( "coordinates: " + Float.toString(x)+", "+Float.toString(y));
+
+                // Add coordinates to output
+                float[] coordinatesAsNumber = new float[2];
+
+                coordinatesAsNumber[0] = x;
+                coordinatesAsNumber[1] = y;
+
+                //System.out.println( "coordinates[]: " + Float.toString(coordinatesAsNumber[0])+", "+Float.toString(coordinatesAsNumber[1]));
+                output.add(coordinatesAsNumber);
+
+                //System.out.println("output1 :" + Float.toString(output.get(i)[0]) + " " + Float.toString(output.get(i)[1]));
+
+            }
+            //System.out.println("output2: " + Float.toString(output.get(0)[0]) + " " + Float.toString(output.get(0)[1]));
+            //for (int i1 = 0; i1 < output.size(); i1++) {
+//                System.out.println("output2: " + Float.toString(output.get(i1)[0]) + " " + Float.toString(output.get(i1)[1]));
+//            }
+        }
+
+        return output;
+    }
+
+    public void printPlay(Map<Integer,List<List<float[]>>> play) {
+
+
+        for (int playerIndex : play.keySet()){
+
+            List<List<float[]>> outerList = play.get(playerIndex);
+            int outerListLength = outerList.size();
+
+            for (int stageIndex = 0; stageIndex < outerListLength; stageIndex++) {
+
+                List<float[]> innerList = outerList.get(stageIndex);
+                int innerListLength = innerList.size();
+
+                for (int pointIndex = 0; pointIndex < innerListLength; pointIndex++) {
+                    float[] coordinate = innerList.get(pointIndex);
+
+                    String string1 = "Player: " + Integer.toString(playerIndex);
+                    String string2 = ", Stage: " + Integer.toString(stageIndex + 1);
+                    String string3 = ", X: " + Float.toString(coordinate[0]);
+                    String string4 = ", Y: " + Float.toString(coordinate[1]);
+
+                    System.out.println(string1 + string2 + string3 + string4);
+
+                }
+
+            }
+
+        }
+    }
     /**
      * Getting node value
      * @param Element node
@@ -218,4 +311,8 @@ public class XMLParser {
         NodeList n = item.getElementsByTagName(str);
         return this.getElementValue(n.item(0));
     }
+
+
+
+
 }

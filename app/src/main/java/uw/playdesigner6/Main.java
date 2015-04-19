@@ -60,8 +60,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     private Button buttonInitializationComplete, buttonIncrementStage, buttonPlayComplete;
 
     //TextViews
-    private TextView text_play_name, text_initialization, textCurrentStage;
-    private TextView text_play_complete;
+    private TextView textPlayName, textInitialization, textCurrentStage;
+    private TextView textPlayComplete;
 
     //Strings
     private String play_filename;
@@ -113,10 +113,10 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         buttonPlayComplete = (Button)findViewById(R.id.buttonPlayComplete);
 
         //Define TextViews
-        text_play_name = (TextView)findViewById(R.id.value_play_name);
-        text_initialization = (TextView)findViewById(R.id.value_initialization);
+        textPlayName = (TextView)findViewById(R.id.value_play_name);
+        textInitialization = (TextView)findViewById(R.id.value_initialization);
         textCurrentStage = (TextView)findViewById(R.id.value_increment);
-        text_play_complete = (TextView)findViewById(R.id.value_play_complete);
+        textPlayComplete = (TextView)findViewById(R.id.value_play_complete);
 
         //Define current state
         current_state= state_list.SPLASH;
@@ -224,43 +224,39 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     //Handle Play Existing button click event
     public void onClickPlayExisting(View view)
     {
+        //If replaying play, stop animation
+        playView.stopPlay();
 
-        //setContentView(R.layout.activity_main);
-        //animatedBoxView = (AnimatedBoxView).findViewById(R.id.play);
-                //CharSequence list="Tea";
-
+        // Get list of files in directory
         File dir = getFilesDir();
-        //File[] file_list = dir.listFiles();
+        
+        // Convert filename list to string array
         String[] filenameList = dir.list();
-        System.out.println( filenameList );
-
+        
+        // Create bundle, including filename list to send to fragment
         Bundle bundle = new Bundle();
         bundle.putStringArray("list", filenameList);
-
 
         //DialogFragment dialog = SingleChoiceListDialogFragment.newInstance(list);
         DialogFragment dialog = new SingleChoiceListDialogFragment();
         dialog.setArguments(bundle);
 
-
         //include a tag to identify the fragment
          dialog.show(getSupportFragmentManager(),
                  "SingleChoiceListDialogFragment");
 
-
         //Update current state
         current_state= state_list.SPLASH;
         updateButtonState(current_state);
-
-//         playPlay(fileToLoad);*/
-
-        // playView.temporary();
     }
 
 
 
     public void onClickDeletePlay(View view)
     {
+        //If replaying play, stop animation
+        playView.stopPlay();
+
         //CharSequence list="Tea";
 
         File dir = getFilesDir();
@@ -317,55 +313,59 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     }
 
 
+    // Respond to Play Existing click okay event
     @Override
     public void singleChoiceOnOkay(int selectedItemIndex) {
+        // Get list of files and directory
         File directory = getFilesDir();
-        //File[] file_list = dir.listFiles();
+
+        // Convert filename list to string array
         String[] filenameList = directory.list();
+
         StringBuilder stringBuilder = new StringBuilder();
-//         if (selectedItemIndex.hasValue) {
-//             for (int i = 0; i < arrayList.size(); i++) {
-                String fileToPlay = filenameList[selectedItemIndex];
 
+        // Name of file/play selected
+        String fileToPlay = filenameList[selectedItemIndex];
 
-                //deleteFile(fileToRemove);
-                Log.d(TAG, "File to play: " + fileToPlay);
+        // Print filename to log
+        Log.d(TAG, "File to play: " + fileToPlay);
 
-                stringBuilder = stringBuilder.append(" " + fileToPlay);
-// // dental            }
-            Toast.makeText(this, "File to play: "
-                     + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
+        stringBuilder = stringBuilder.append(" " + fileToPlay);
 
+        // Update text view with play name
+        textPlayName.setText(fileToPlay);
+
+        // Create toast to display file selected
+        Toast.makeText(this, "File to play: "
+             + stringBuilder.toString(), Toast.LENGTH_SHORT).show();
+
+        // Call method to load and replay play
         playPlay(fileToPlay);
-
-//         }
-//         else {
-//             Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
-//         }
-
     }
     @Override
     public void singleChoiceOnCancel() {
         Toast.makeText(this, "No files deleted", Toast.LENGTH_SHORT).show();
     }
 
+    // Handle Create New button click event
     public void onClickCreateNewPlay(View view)
     {
+        //If replaying play, stop animation
+        playView.stopPlay();
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
         alert.setTitle("New Play");
         alert.setMessage("Enter play name");
 
-// Set an EditText view to get user input
+        // Set an EditText view to get user input
         final EditText input = new EditText(this);
         alert.setView(input);
 
         alert.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 play_filename = input.getText().toString();
-                // Do something with value!
-                text_play_name.setText(play_filename);
+                textPlayName.setText(play_filename);
                 current_state= state_list.INITIALIZING;
                 updateButtonState(current_state);
             }
@@ -383,9 +383,13 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         play_as_string = xml_header + "<play>";
     }
 
+    // Handle Initialization Complete button click
     public void onClickInitializationComplete(View view)
     {
-        text_initialization.setText("complete");
+        //If replaying play, stop animation
+        playView.stopPlay();
+
+        textInitialization.setText("complete");
         current_state= state_list.INCREMENTING;
         updateButtonState(current_state);
         currentStage=1;
@@ -396,20 +400,22 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
     public void onClickIncrementStage(View view)
     {
+        //If replaying play, stop animation
+        playView.stopPlay();
+
         play_as_string = concatenateStage(play_as_string);
-        System.out.println(play_as_string);
         currentStage++;
         textCurrentStage.setText(Integer.toString(currentStage));
         mapClear();
 
-
     }
-
-
 
     public void onClickPlayComplete(View view)
     {
-        text_play_complete.setText("complete");
+        //If replaying play, stop animation
+        playView.stopPlay();
+
+        textPlayComplete.setText("complete");
         current_state= state_list.COMPLETE;
         playView.clear_canvas();
         //concatenateStage();
@@ -423,8 +429,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
     }
 
-
-
+    // Update button state, based on app state
     public void updateButtonState(String current_state) {
         if (current_state == state_list.SPLASH) {
             //Set the button_shape_enabled state
@@ -473,9 +478,9 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         }
     }
 
-
+    // Read play from XML file
     public String readFromFile(String filename){
-        String input_string ="Garbage";
+        String input_string ="";
         try {
             FileInputStream file = openFileInput(filename);
             InputStreamReader input_stream = new InputStreamReader(file);
@@ -492,7 +497,6 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                 input_string =input_string_builder.toString();
             }
 
-
         } catch (FileNotFoundException e) {
             // TODO
 
@@ -505,6 +509,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         return input_string;
     }
 
+    // Write play to XML file
     public void writeToFile(String filename, String string){
         /* Checks if external storage is available for read and write */
 
@@ -519,13 +524,10 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         }
 
     }
+
+    // Concatenate most recent stage for file recording
     //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
     public String concatenateStage(String stage) {
-
-        for (int i=0; i<PLAYER_COUNT; i++) {
-            System.out.println("concatenate stage: " + dataPoints.get(Integer.toString(i)));
-        }
-
 
         String format =
             "<stage>" + "\n" +
@@ -560,6 +562,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                 dataPoints.get("5"));
     }
 
+    // Replay play
     public void playPlay(String filename){
 
         // XML parser based on tutorial found at:
@@ -572,7 +575,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         XMLParser parser = new XMLParser();
 
         // Parse XML play into map
-        Map<String,List<String>> currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
+        Map<Integer,List<List<float[]>>> currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
 
         // Send play to view for playing
         playView.startPlay(currentPlay);

@@ -9,17 +9,15 @@ import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * Created by lybar_000 on 3/10/2015.
@@ -33,8 +31,8 @@ public class PlayView extends View {
     private Path path_play;
 
     //Player definition constants
-    private int player_size = 20;
-    private int selection_size = player_size*1;
+    private int PLAYER_ICON_SIZE = 40;
+    private int selection_size = PLAYER_ICON_SIZE*1;
     private int text_size = 30;
     private int text_shift = text_size*6/20;
 
@@ -49,37 +47,33 @@ public class PlayView extends View {
     private Context context;
     private android.os.Handler handler;
     private final int FRAME_RATE = 30;
-    int x = this.getWidth()/2;
-    int y = -1;
-    private int xVelocity = 5;
-    private int yVelocity = 5;
+    private Bitmap[] playerIcons = new Bitmap[PLAYER_COUNT];
     private int pointIndex = 0;
-    private Play newPlay;
-    private Play play;
 
     public boolean playExisting = false;
+    private final int STAGE_LENGTH = 3;   //Time in seconds
+    private int stageFrameCount = 0;
+    private int currentStage = 0;
+    private Play interpolatedPlay;
+    private int FRAMES_PER_STAGE = FRAME_RATE*STAGE_LENGTH;
 
-
-    //Instantiate view
+        //Instantiate view
     public PlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        // Related to animation
+        // Create handler for animation thread
         this.context = context;
         handler = new android.os.Handler();
 
-
         setupDrawing();
 
-/*        System.out.println( "this is a test of the resource accessing capabilities" );
-        System.out.println(context.getString(R.string.buttonOkay));
-        System.out.println(context.getResources().getStringArray());*/
     }
 
-    // Related to animation
+    // Create runnable animation thread
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
+            // Triggers update of canvas
             invalidate();
         }
     };
@@ -112,13 +106,29 @@ public class PlayView extends View {
         paint_path.setStrokeJoin(Paint.Join.ROUND);
         paint_path.setStrokeCap(Paint.Cap.ROUND);
 
-        //
+        // Create canvas
         paint_canvas = new Paint(Paint.DITHER_FLAG);
+
+        // Create path
         path_play = new Path();
 
+        // Create player icons, consisting of circle and player name/number
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            // Create array of player icons as bitmap
+            playerIcons[i] = Bitmap.createBitmap(PLAYER_ICON_SIZE, PLAYER_ICON_SIZE, Bitmap.Config.ARGB_8888);
 
+            // Add canvas to each bitmap in array
+            Canvas temporaryCanvas = new Canvas(playerIcons[i]);
 
+            // Draw circle on canvas, for player icon
+            temporaryCanvas.drawCircle(PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2, paint_circle);
 
+            // Add player name/number two player icon
+            temporaryCanvas.drawText(Integer.toString(i + 1), PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2 + text_shift,paint_text);
+
+            // Initialize players, including location, name, and selection status
+            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], Integer.toString(i + 1), false);
+        }
     }
 
     //Create and display blank canvas
@@ -136,73 +146,54 @@ public class PlayView extends View {
         
         //Loop on players
         for (int i=0; i<PLAYER_COUNT; i++) {
-            //Define player initial positions
-            String name = Integer.toString(i+1);
-            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], name, false);
-            
-            //Draw players
-            drawPlayer(players[i]);
+            // Place players in initial positions
+            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], Integer.toString(i + 1), false);
 
             //Push initial positions into map
-            data = points.get(name);
+            data = points.get(Integer.toString(i+1));
             data.add(pointsToString(INITIAL_X[i],INITIAL_Y[i]));
         }
-
     }
 
     @Override
     // onDraw is called when:
     // 1) Initial draw of view
-    // 2) Function invalidate()
-
+    // 2) Function invalidate() (Note that this is part of the animation thread/runnable)
     protected void onDraw(Canvas canvas) {
-        pointIndex++;
-        //temporary();
 
+        // Update frame if replaying existing play
         if (playExisting) {
-            bouncingBall(canvas);
-            boolean playStatus = updatePlay();
-//             updatePlay();
+            updatePlay();
+            pointIndex++;
         }
 
+        // Update player icon positions
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+
+            // Determine location of player icon, with offset
+            float X = players[i].X-PLAYER_ICON_SIZE/2;
+            float Y = players[i].Y-PLAYER_ICON_SIZE/2;
+
+            // Draw player icons on canvas
+            canvas.drawBitmap(playerIcons[i], X, Y, null);
+        }
+
+        // Need to determine if necessary
         canvas.drawBitmap(bitmap_play, 0, 0, paint_canvas);
+
+        // Draw path
         canvas.drawPath(path_play, paint_path);
 
-
-
+        //Call in invalidate() using animation thread
         handler.postDelayed(runnable, FRAME_RATE);
-        //handler.post(runnable);
-
-
     }
 
-
-
-    private void bouncingBall(Canvas canvas){
-
-        BitmapDrawable box = (BitmapDrawable) context.getResources().getDrawable(R.drawable.basketball50);
-
-        Random r = new Random();
-        x = r.nextInt(10)+30;
-        if ( y <0) {
-            y = this.getHeight()/2;
-        } else {
-            y += yVelocity;
-            if (y < 0 || (y > this.getHeight() - box.getBitmap().getHeight())) {
-                yVelocity = yVelocity*-1;
-            }
-        }
-
-
-        canvas.drawBitmap(box.getBitmap(), x, y, null);
-
-    }
 
     //Capture and handle touch events during play recording
     public boolean onTouchEvent(MotionEvent event) {
 
+        // If replaying play, stop on touch
         stopPlay();
-
 
         //Capture touch location
         Location locationTouch = locationProjected(event.getX(), event.getY());
@@ -217,7 +208,7 @@ public class PlayView extends View {
 
         //Draw players on canvas
         for (int i=0; i<PLAYER_COUNT; i++) {
-            drawPlayer(players[i]);
+            //drawPlayer(players[i]);
         }
 
         //Draw path from most recent player move
@@ -229,13 +220,13 @@ public class PlayView extends View {
         return true;
     }
 
-    //Draw individual player
+/*    //Draw individual player
     private void drawPlayer(Player player){
-        canvasPlay.drawCircle(player.X, player.Y, player_size, paint_circle);
+        canvasPlay.drawCircle(player.X, player.Y, PLAYER_ICON_SIZE, paint_circle);
         canvasPlay.drawText(player.name, player.X, player.Y + text_shift,paint_text);
-    }
+    }*/
 
-    //Clear canvas
+    //Clear canvas (Used to remove path)
     public void clear_canvas(){
         canvasPlay.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
     }
@@ -250,7 +241,6 @@ public class PlayView extends View {
         return new Location(x_projected, y_projected);
     }
 
-
     //Update player position and selection status based on touch events
     private Player positionUpdate(MotionEvent event, Location locationTouch, Player player) {
         double delta_X = locationTouch.X - player.X;
@@ -259,8 +249,6 @@ public class PlayView extends View {
 
         //Create repository points traversed by player
         List<String> data = points.get(player.name);
-
-
 
         //Address each touch event
         switch (event.getAction()) {
@@ -298,7 +286,6 @@ public class PlayView extends View {
                 //return false;
         }
         return player;
-
     }
 
     //Create string from points
@@ -306,237 +293,159 @@ public class PlayView extends View {
         return "(" + Float.toString(x) + "," + Float.toString(y) + ")";
     }
 
-    public void temporary(){
+    // Start play
+    public void startPlay(Map<Integer,List<List<float[]>>> playMap){
 
-        for (int i=0; i<PLAYER_COUNT; i++) {
-            //Define player initial positions
-            String name = Integer.toString(i+1);
-            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], name, false);
-
-            //Draw players
-            drawPlayer(players[i]);
-        }
-
-        for (int playerIndex=0; playerIndex<PLAYER_COUNT; playerIndex++) {
-            //players[playerIndex]=new Player(X, Y, playerName, false);
-
-
-            // for (int pointIndex = 0; pointIndex < 1000; pointIndex++) {
-                float X = playerIndex+pointIndex;
-                float Y = playerIndex*2+pointIndex;
-
-//                 System.out.println(Float.toString(X) + ", "  + Float.toString(Y));
-                players[playerIndex].X = X;
-                players[playerIndex].Y = Y;
-
-                //Clear the canvas
-                clear_canvas();
-
-                //Draw players on canvas
-//                 for (int i = 0; i < PLAYER_COUNT; i++) {
-                    drawPlayer(players[playerIndex]);
-//                 }
-                //handler.post(runnable);
-                //handler.postDelayed(runnable, FRAME_RATE);
-                //Invalidate canvas, causing it to redraw
-                //invalidate();
-                //SystemClock.sleep(5);
-//             }
-
-        }
-        pointIndex++;
-        if (pointIndex > 1000){
-            pointIndex = 0;
-        }
-
-
-
-    }
-
-    public void startPlay(Map<String,List<String>> currentPlay){
-        
+        // Allow play update method to be called from onDraw
         playExisting = true;
 
-        // Get list of keys
-        Set<String> keys = currentPlay.keySet();
+        // Create play as Play, based on points imported from XML file
+        Play originalPlay = new Play(playMap, 0, 0, 0, false);
 
-        // Get number of stages in play
-        int stageCount = 0;
-        for (String key : keys){
-            List<String> data = currentPlay.get(key);
-            stageCount = data.size();
-            break;
-        }
-
-        play = new Play(currentPlay, stageCount, 0, 0, false);
-
-        // Initialize player objects and position
+/*        // Initialize player objects and position
         for (int i=0; i<PLAYER_COUNT; i++) {
             //Define player initial positions
-            String name = Integer.toString(i+1);
-            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], name, false);
+//            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], Integer.toString(i+1), false);
 
-            //Draw players
-            drawPlayer(players[i]);
-        }
+        }*/
+        // Set current (initial) stage index to 0
+        currentStage = 0;
 
+        // Interpolate play, such that each stage of each player has the same number of points
+        interpolatedPlay = interpolatePlay(originalPlay);
     }
 
+    // Stop play replay
     public void stopPlay(){
         playExisting = false;
-
     }
 
+    // Interpolate play, such that each stage of each player has the same number of points
+    public Play interpolatePlay(Play originalPlay){
+        Map<Integer,List<List<float[]>>> interpolatedMap = new HashMap<Integer,List<List<float[]>>>();
 
-    public boolean updatePlay(){
+        List<List<float[]>> stageList;
+        List<float[]> originalCoordinates;
+        float[] XY;
+        List<float[]> previousCoordinates;
+        List<float[]> interpolatedCoordinates;
 
-        List<float[]> coordinatesAsList;
+        // Number of stages in play
+        int stageCount = originalPlay.getStageCount();
 
-        //Clear the canvas
-        clear_canvas();
+   // Loop on players
+        for (int playerIndex : originalPlay.pointMap.keySet()){
+
+            // Data structure for all of the information for a single player
+            stageList = new ArrayList<List<float[]>>();
+
+            // Loop on stages
+            for (int stageIndex = 0; stageIndex < stageCount; stageIndex++) {
+
+                // Get XY coordinates for player
+                originalCoordinates = new ArrayList<float[]>();
+                originalCoordinates = originalPlay.getXYlist(playerIndex, stageIndex);
+
+                // Number of points for selected stage and player
+                int pointCount = originalCoordinates.size();
+
+                // Initialize list for interpolated coordinates
+                interpolatedCoordinates = new ArrayList<float[]>();
+
+                // Loop on points for interpolated coordinates
+                for (int pointIndex = 0; pointIndex < FRAMES_PER_STAGE; pointIndex++) {
+                    XY = new float[2];
+
+                    // If no points present in current stage, use last point from last stage
+                    if (pointCount < 1) {
+
+                        previousCoordinates = stageList.get(stageIndex-1);
+                        XY[0] = previousCoordinates.get(previousCoordinates.size()-1)[0];
+                        XY[1] = previousCoordinates.get(previousCoordinates.size()-1)[1];
+                    }
+
+                    else if (pointCount == 1) {
+                        XY[0] = originalCoordinates.get(0)[0];
+                        XY[1] = originalCoordinates.get(0)[1];
+                    }
+
+                    else {
+                        // Percent of way through interpolated stage
+                        float fractionalIndex = (pointCount - 1) * pointIndex/(float)FRAMES_PER_STAGE;
+
+                        // Get previous index
+                        int previousIndex = (int) Math.floor(fractionalIndex);
+
+                        // Get next index
+                        int nextIndex = (int) Math.ceil(fractionalIndex);
+
+                        if (previousIndex == nextIndex){
+                            XY[0] = originalCoordinates.get(previousIndex)[0];
+                            XY[1] = originalCoordinates.get(previousIndex)[1];
+                        }
+                        else {
+                            // Weight factor for interpolation
+                            float interpolationWeight = (fractionalIndex - previousIndex) / (nextIndex - previousIndex);
+
+                            float[] previousXY = originalCoordinates.get(previousIndex);
+                            float[] nextXY = originalCoordinates.get(nextIndex);
+                            XY[0] = previousXY[0] + (nextXY[0] - previousXY[0]) * interpolationWeight;
+                            XY[1] = previousXY[1] + (nextXY[1] - previousXY[1]) * interpolationWeight;
+                        }
+
+                    }
+                    // Add interpolated XY points to Coordinate list
+                    interpolatedCoordinates.add(XY);
+                }
+                // Add coordinate list to stage
+                stageList.add(interpolatedCoordinates);
+
+            }// End loop on stage
+            // Add stages to player
+            interpolatedMap.put(playerIndex, stageList);
+        }// End loop on player
+
+        // Create interpolated play based on original play
+        Play interpolatedPlay = originalPlay;
+
+        // Update point map based on interpolated values
+        interpolatedPlay.pointMap = interpolatedMap;
+
+        return interpolatedPlay;
+    }
+
+    // During play replay, update player positions
+    public void updatePlay(){
+
+        //List<float[]> coordinatesAsList;
+
+        // Determine if end of stage reached
+        if (stageFrameCount >= FRAMES_PER_STAGE-1){
+
+            // Increment stage
+            currentStage++;
+
+            // Determine if end of play reached
+            if (currentStage >= interpolatedPlay.getStageCount()){
+                // Reset stage
+                currentStage = 0;
+            }
+            // Reset frame counter within stage
+            stageFrameCount = 0;
+        }
+        else{
+            // Increment frame count within stage
+            stageFrameCount++;
+        }
 
         // Loop on players
-        for (int playerIndex = 0; playerIndex < PLAYER_COUNT; playerIndex++) {
+        for (int playerIndex : interpolatedPlay.pointMap.keySet()){
+            // Extract relevant XY coordinates
+            float[] XY = interpolatedPlay.getXYcoordinate(playerIndex, currentStage, stageFrameCount);
 
-            // Get player number as string
-            String playerName = Integer.toString(playerIndex+1);
-            System.out.println("Stage: " + Integer.toString(play.currentStage) + ", " + "player: " + playerName);
-
-
-
-pointIndex++;
-            float X = playerIndex+pointIndex;
-            float Y = playerIndex*2+pointIndex;
-
-//                 System.out.println(Float.toString(X) + ", "  + Float.toString(Y));
-            players[playerIndex].X = X;
-            players[playerIndex].Y = Y;
-
-
-            //Draw players on canvas
-//                 for (int i = 0; i < PLAYER_COUNT; i++) {
-            drawPlayer(players[playerIndex]);
-
+            // Update player positions
+            players[playerIndex-1].X = XY[0];
+            players[playerIndex-1].Y = XY[1];
         }
-            // Extract X and Y coordinates
-//             List<String> data = play.points.get(playerName);
-//             System.out.println( data );
-            // String pointsAsString = data.get(play.currentStage);
-            // String[] pointsAsStringArray = pointsAsString.split("['(,)]+");
-
-
-
-/*                for (int pointIndex = 0; pointIndex < pointsAsStringArray.length; pointIndex++) {
-                String pointAsString = pointsAsStringArray[pointIndex];
-                //System.out.println(pointAsString);
-
-            }*/
-            //System.out.println("pointsAsString: " + pointsAsString);
-//             coordinatesAsList = parseCoordinates(pointsAsString);
-//             int coordinateCount = coordinatesAsList.size();
-            //System.out.println( "list size:" + coordinateCount);
-
-
-//            if (coordinateCount > 0) {
-//                //System.out.println("first point"  +  Float.toString(coordinatesAsList.get(0)[0]));
-////                     for (int pointIndex = 0; pointIndex < coordinateCount; pointIndex++) {
-//
-//              //      System.out.println(play.currentPoint);
-//                    float[] coordinatesAsNumber = coordinatesAsList.get(play.currentPoint);
-//                    float X = coordinatesAsNumber[0];
-//                    float Y = coordinatesAsNumber[1];
-//
-//                    System.out.println(playerName + ": " + Float.toString(X) + ", " + Float.toString(Y));
-//
-//
-//                    //players[playerIndex]=new Player(X, Y, playerName, false);
-//                    players[playerIndex].X = X;
-//                    players[playerIndex].Y = Y;
-//
-//                    //Clear the canvas
-//                    clear_canvas();
-//
-//                    //Draw players on canvas
-//                    for (int i=0; i<PLAYER_COUNT; i++) {
-//                        drawPlayer(players[i]);
-//                    }
-//
-//                    //Invalidate canvas, causing it to redraw
-//                    //invalidate();
-//                    //SystemClock.sleep(10);
-//                    //System.out.println(play.currentPoint);
-//
-//                }
-//            }
-//
-////             }
-
-
-        return true;
     }
-
-    private List<float[]> parseCoordinates(String coordinatesAsString){
-
-
-        List<float[]> output = new ArrayList<float[]>();
-
-        // Determine if coordinates are present
-        boolean coordinatesPresent = !coordinatesAsString.equals("'[]'");
-
-        if (coordinatesPresent){
-
-            // Remove single quotes and brackets
-            Pattern p = Pattern.compile("[\\['\\]]");
-            Matcher m = p.matcher(coordinatesAsString);
-            coordinatesAsString = m.replaceAll("");
-
-            // Split string into array
-            // (?<=\\)) positive lookbehind means that it must be preceded by )
-            // (?=\\() positive lookahead means that it must be suceeded by (
-            // (,\\s*) means that it must be splitted on the , and any space after that
-            String[] coordinatesAsStringArray = coordinatesAsString.split("(?<=\\))(,\\s*)(?=\\()");
-
-            // Pattern for removing parentheses
-            p = Pattern.compile("[\\(\\)]");
-
-
-            int coordinateCount = coordinatesAsStringArray.length;
-
-            // Loop on pairs of coordinates
-            for (int i = 0; i < coordinateCount; i++) {
-                // Set of coordinates in format (x,y)
-                String[] currentCoordinate = coordinatesAsStringArray[i].split(",\\s*");
-
-                // Extract x-coordinate as float, note that leading ( is removed
-                m = p.matcher(currentCoordinate[0]);
-                float x = Float.parseFloat(m.replaceAll(""));
-
-                // Extract y-coordinate as float, note that leading ) is removed
-                m = p.matcher(currentCoordinate[1]);
-                float y = Float.parseFloat(m.replaceAll(""));
-
-                 //System.out.println( "coordinates: " + Float.toString(x)+", "+Float.toString(y));
-
-                // Add coordinates to output
-                float[] coordinatesAsNumber = new float[2];
-
-                       coordinatesAsNumber[0] = x;
-                coordinatesAsNumber[1] = y;
-
-                //System.out.println( "coordinates[]: " + Float.toString(coordinatesAsNumber[0])+", "+Float.toString(coordinatesAsNumber[1]));
-                output.add(coordinatesAsNumber);
-
-                //System.out.println("output1 :" + Float.toString(output.get(i)[0]) + " " + Float.toString(output.get(i)[1]));
-
-            }
-            //System.out.println("output2: " + Float.toString(output.get(0)[0]) + " " + Float.toString(output.get(0)[1]));
-            //for (int i1 = 0; i1 < output.size(); i1++) {
-//                System.out.println("output2: " + Float.toString(output.get(i1)[0]) + " " + Float.toString(output.get(i1)[1]));
-//            }
-        }
-
-        return output;
-    }
-
-
 }
