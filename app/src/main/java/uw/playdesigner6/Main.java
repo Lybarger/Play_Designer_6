@@ -577,7 +577,6 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         // Parse XML play into map
         Map<Integer,List<List<float[]>>> currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
-
         // Send play to view for playing
         playView.startPlay(currentPlay);
 
