@@ -6,10 +6,9 @@ import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.os.Environment;
+import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,9 +19,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,12 +26,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import android.util.Log;
 
 
 
@@ -81,7 +79,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     private String[] playAsArray;
     private String playAsString;
 
-
+    private MultiThreadingTCP multiThreadingTcp;
 
 
     @Override
@@ -130,7 +128,13 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
             dataPoints.put(name, data);
         }
         playView.setupDataPoints(dataPoints);
+        //Getting the public IP and upload it into amazon s3
+        Thread ip = new GetIP();
+        ip.start();
 
+        //Starting the TCP Connection
+        Log.w(TAG,"Starting the TCP CONNECTION");
+        this.multiThreadingTcp = new MultiThreadingTCP();
         // playView.initialPlayerInsert();
     }
 
@@ -248,6 +252,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         //Update current state
         current_state= state_list.SPLASH;
         updateButtonState(current_state);
+
     }
 
 
@@ -572,6 +577,11 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         // Replay as XML
         String playAsXml = readFromFile(filename);
 
+
+        Log.w(TAG, "sending message through tcp");
+        multiThreadingTcp.sendMessage(play_as_string);
+
+
         // Create instance of XML parser
         XMLParser parser = new XMLParser();
 
@@ -580,5 +590,43 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         // Send play to view for playing
         playView.startPlay(currentPlay);
 
+    }
+
+    private class GetIP extends Thread{
+        public void run() {
+            System.out.println("getting ip");
+            try {
+                URL whatismyip = new URL("http://checkip.amazonaws.com");
+                BufferedReader in = null;
+                in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+                final String ip = in.readLine(); //you get the IP as a String
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("IP_SERVER.txt", Context.MODE_PRIVATE));
+                            outputStreamWriter.write(ip);
+                            outputStreamWriter.close();
+                            uploadToCloud();
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void uploadToCloud(){
+        UploadCredentials credentials = new UploadCredentials(getResources(),this);
+        credentials.execute();
     }
 }
