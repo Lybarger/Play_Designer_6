@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -40,6 +42,8 @@ import java.util.Set;
 public class Main extends ActionBarActivity implements MultiChoiceListDialogFragment.multiChoiceListDialogListener, SingleChoiceListDialogFragment.singleChoiceListDialogListener {
 //public class Main extends ActionBarActivity {
     private static final String TAG = Main.class.getSimpleName();
+    public int SERVERPORT = 4445;
+
 
     private Paint paint_circle;
     private ImageView image_court, image_play;
@@ -64,7 +68,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     //Strings
     private String play_filename;
     private String play_as_string;
-    private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "\n";
+    private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "";
 
     //Integers
     private int currentStage = 1;
@@ -85,6 +89,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Random random = new Random();
+        SERVERPORT = random.nextInt(65535 - 49152 + 1) + 49152;
 
         //
 /*        String folder_main = "play_designer";
@@ -134,8 +140,39 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         //Starting the TCP Connection
         Log.w(TAG,"Starting the TCP CONNECTION");
-        this.multiThreadingTcp = new MultiThreadingTCP();
+        this.multiThreadingTcp = new MultiThreadingTCP(SERVERPORT);
         // playView.initialPlayerInsert();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK && isTaskRoot()) {
+            //Ask the user if they want to quit
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.quit)
+                    .setMessage(R.string.really_quit)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //Stop the activity
+                            killTCP();
+                            finish();
+                        }
+                    })
+                    .setNegativeButton(R.string.no, null)
+                    .show();
+
+            return true;
+        }
+        else {
+            return super.onKeyDown(keyCode, event);
+        }
+    }
+
+
+    public void killTCP(){
+        this.multiThreadingTcp.stopTCP();
+        this.multiThreadingTcp.interrupt();
     }
 
 /*    public boolean isExternalStorageWritable() {
@@ -536,27 +573,27 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     public String concatenateStage(String stage) {
 
         String format =
-            "<stage>" + "\n" +
-                "<player>" + "\n" +
-                    "<id>1</id>" + "\n" +
-                    "<xy>'%s'</xy>" + "\n" +
-                "</player>" + "\n" +
-                "<player>" + "\n" +
-                    "<id>2</id>" + "\n" +
-                    "<xy>'%s'</xy>" + "\n" +
-                "</player>" + "\n" +
-                "<player>" + "\n" +
-                    "<id>3</id>" + "\n" +
-                    "<xy>'%s'</xy>" + "\n" +
-                "</player>" + "\n" +
-                "<player>" + "\n" +
-                    "<id>4</id>" + "\n" +
-                    "<xy>'%s'</xy>" + "\n" +
-                "</player>" + "\n" +
-                "<player>" + "\n" +
-                    "<id>5</id>" + "\n" +
-                    "<xy>'%s'</xy>" + "\n" +
-                "</player>" + "\n" +
+            "<stage>" + "" +
+                "<player>" + "" +
+                    "<id>1</id>" + "" +
+                    "<xy>'%s'</xy>" + "" +
+                "</player>" + "" +
+                "<player>" + "" +
+                    "<id>2</id>" + "" +
+                    "<xy>'%s'</xy>" + "" +
+                "</player>" + "" +
+                "<player>" + "" +
+                    "<id>3</id>" + "" +
+                    "<xy>'%s'</xy>" + "" +
+                "</player>" + "" +
+                "<player>" + "" +
+                    "<id>4</id>" + "" +
+                    "<xy>'%s'</xy>" + "" +
+                "</player>" + "" +
+                "<player>" + "" +
+                    "<id>5</id>" + "" +
+                    "<xy>'%s'</xy>" + "" +
+                "</player>" + "" +
             "</stage>" + "\n"
             ;
 
@@ -579,7 +616,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
 
         Log.w(TAG, "sending message through tcp");
-        multiThreadingTcp.sendMessage(play_as_string);
+        multiThreadingTcp.sendMessage(playAsXml);
 
 
         // Create instance of XML parser
@@ -596,16 +633,17 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         public void run() {
             System.out.println("getting ip");
             try {
-                URL whatismyip = new URL("http://checkip.amazonaws.com");
+                URL whatismyip = new URL("http://checkip.amazonaws.com/");
                 BufferedReader in = null;
                 in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
                 final String ip = in.readLine(); //you get the IP as a String
+                System.out.println("Finish getting ip " +  ip + " " + SERVERPORT);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("IP_SERVER.txt", Context.MODE_PRIVATE));
-                            outputStreamWriter.write(ip);
+                            outputStreamWriter.write(ip + " " + SERVERPORT);
                             outputStreamWriter.close();
                             uploadToCloud();
                         } catch (FileNotFoundException e) {

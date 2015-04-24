@@ -4,15 +4,19 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiThreadingTCP {
+public class MultiThreadingTCP extends Thread {
 
     private List<PrintWriter> outStreams;
     private TCPConnection tcp;
 
-    public MultiThreadingTCP(){
+    public MultiThreadingTCP(int port){
         this.outStreams = new ArrayList<PrintWriter>();
-        this.tcp = new TCPConnection(this.outStreams);
+        this.tcp = new TCPConnection(this.outStreams, port);
         this.tcp.start();
+    }
+
+    public void stopTCP(){
+       this.tcp.interrupt();
     }
 
     /**
@@ -21,8 +25,10 @@ public class MultiThreadingTCP {
      */
     public void sendMessage(String message){
         System.out.println("TCP connection sending message : " + message);
+        System.out.println("Sending to : " + outStreams.size());
         for (PrintWriter outStream : outStreams){
             if(outStream != null && !outStream.checkError()){
+                System.out.println("Sending message!");
                 outStream.println(message);
                 outStream.flush();
             }
