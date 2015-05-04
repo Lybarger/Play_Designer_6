@@ -200,7 +200,7 @@ public class PlayView extends View {
 
         //Update player positions
         for (int i=0; i<PLAYER_COUNT; i++) {
-            players[i] = positionUpdate(event,locationTouch, players[i]);
+            players[i] = positionUpdate(event,locationTouch, players, i);
         }
 
         //Clear the canvas
@@ -242,10 +242,20 @@ public class PlayView extends View {
     }
 
     //Update player position and selection status based on touch events
-    private Player positionUpdate(MotionEvent event, Location locationTouch, Player player) {
-        double delta_X = locationTouch.X - player.X;
-        double delta_Y = locationTouch.Y - player.Y;
-        double distance = Math.pow(Math.pow(delta_X, 2) + Math.pow(delta_Y, 2), 0.5);
+    private Player positionUpdate(MotionEvent event, Location locationTouch, Player[] players, int playerIndex) {
+        Player player = players[playerIndex];
+
+        double[] distance = new double[PLAYER_COUNT];
+
+        boolean distance_check = false;
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            double delta_X = locationTouch.X - players[i].X;
+            double delta_Y = locationTouch.Y - players[i].Y;
+            distance[i] = Math.pow(Math.pow(delta_X, 2) + Math.pow(delta_Y, 2), 0.5);
+            if (i != playerIndex) {
+                distance_check = (distance_check) || (distance[i] < PLAYER_ICON_SIZE);
+            }
+        }
 
         //Create repository points traversed by player
         List<String> data = points.get(player.name);
@@ -255,7 +265,7 @@ public class PlayView extends View {
 
             //Touch DOWN
             case MotionEvent.ACTION_DOWN:
-                player.selection_status = (distance < selection_size);
+                player.selection_status = (distance[playerIndex] < PLAYER_ICON_SIZE);
                 if(player.selection_status) {
                     path_play.moveTo(player.X, player.Y);
                     data.add(pointsToString(player.X, player.Y));
@@ -264,7 +274,7 @@ public class PlayView extends View {
 
             //Touch MOVE
             case MotionEvent.ACTION_MOVE:
-                if(player.selection_status) {
+                if(player.selection_status && !distance_check) {
                     path_play.lineTo(locationTouch.X, locationTouch.Y);
                     player.X=locationTouch.X;
                     player.Y=locationTouch.Y;
@@ -275,8 +285,8 @@ public class PlayView extends View {
             //Touch UP
             case MotionEvent.ACTION_UP:
                 if(player.selection_status) {
-                    player.X=locationTouch.X;
-                    player.Y=locationTouch.Y;
+//                     player.X=locationTouch.X;
+                    // player.Y=locationTouch.Y;
                     player.selection_status = false;
                     path_play.reset();
                     data.add(pointsToString(player.X, player.Y));
