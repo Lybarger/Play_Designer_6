@@ -141,7 +141,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         //Starting the TCP Connection
         Log.w(TAG,"Starting the TCP CONNECTION");
         this.multiThreadingTcp = new MultiThreadingTCP(SERVERPORT);
-        // playView.initialPlayerInsert();
+        // playView.initializeCourt();
     }
 
     @Override
@@ -243,7 +243,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
 /*    public void onTest(View view) {
 //        textCurrentStage.setText("SLDKFJSKDJF");
-//        playView.initialPlayerInsert();
+//        playView.initializeCourt();
 //        playView.invalidate();
 //        readPlayFromFile("qq.XML");
 //        playView.invalidate();
@@ -408,7 +408,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
             public void onClick(DialogInterface dialog, int whichButton) {
                 play_filename = input.getText().toString();
                 textPlayName.setText(play_filename);
-                current_state= state_list.INITIALIZING;
+                current_state = state_list.INITIALIZING;
                 updateButtonState(current_state);
             }
         });
@@ -421,8 +421,9 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         alert.show();
 
-        playView.initialPlayerInsert();
+        playView.initializeCourt();
         play_as_string = xml_header + "<play>";
+
     }
 
     // Handle Initialization Complete button click
@@ -438,6 +439,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         textCurrentStage.setText(Integer.toString(currentStage));
 
         mapLastValue();
+        playView.clearCanvas();
     }
 
     public void onClickIncrementStage(View view)
@@ -449,6 +451,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         currentStage++;
         textCurrentStage.setText(Integer.toString(currentStage));
         mapClear();
+        playView.clearCanvas();
 
     }
 
@@ -456,10 +459,11 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     {
         //If replaying play, stop animation
         playView.stopPlay();
+        playView.initializeCourt();
 
         textPlayComplete.setText("complete");
         current_state= state_list.COMPLETE;
-        playView.clear_canvas();
+        playView.clearCanvas();
         //concatenateStage();
         updateButtonState(current_state);
         play_as_string = concatenateStage(play_as_string);
