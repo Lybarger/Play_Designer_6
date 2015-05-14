@@ -24,6 +24,7 @@ public class Screen {
     public float Y; // Y position
     public int playerIndex; //Player associated with
     public boolean selected; //Player selection status (selected by touch event)
+    private Bitmap iconOriginal;
     public Bitmap icon;
     public Paint paint;
     public float rotation = 0;
@@ -40,7 +41,6 @@ public class Screen {
         Y = playerYTemp;
         playerIndex = playerIndexTemp;
         selected = selectionStatusTemp;
-
 
     }
 
@@ -60,21 +60,32 @@ public class Screen {
         paint.setStrokeWidth(LINEWIDTH);
         paint.setColor(context.getResources().getColor(R.color.husky_dark_gray));
 
+
         // Create temporary icon and canvas
-        Bitmap iconOriginal = Bitmap.createBitmap(WIDTH + LINEWIDTH, HEIGHT + LINEWIDTH, Bitmap.Config.ARGB_8888);
+        iconOriginal = Bitmap.createBitmap(WIDTH + LINEWIDTH, HEIGHT + LINEWIDTH, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(iconOriginal);
 
         // Create T shaped drawing
-        canvas.drawLine((float) WIDTH / 2, (float)HEIGHT*3/4, (float) WIDTH / 2, HEIGHT, paint);
-        canvas.drawLine(WIDTH/3,HEIGHT,WIDTH*2/3, HEIGHT, paint);
+        canvas.drawLine((float) HEIGHT * 3 / 4, (float) WIDTH / 2, HEIGHT, (float) WIDTH / 2, paint);
+        canvas.drawLine(HEIGHT, WIDTH / 3, HEIGHT, WIDTH * 2 / 3, paint);
+        //canvas.drawRect(0,0,WIDTH,HEIGHT,paint);
 
         // Create rotation matrix
-        matrix.postRotate(rotation);
+        //rotation = 0;
+        matrix.setRotate(rotation);
 
         // Create rotated icon, based on rotation matrix
         icon = Bitmap.createBitmap(iconOriginal , 0, 0, iconOriginal.getWidth(), iconOriginal.getHeight(), matrix, true);
 
     }
+
+    public void updateIcon(){
+        matrix.setRotate(rotation);
+
+        // Create rotated icon, based on rotation matrix
+        icon = Bitmap.createBitmap(iconOriginal , 0, 0, iconOriginal.getWidth(), iconOriginal.getHeight(), matrix, true);
+    }
+
 
 
     // X coordinates for insertion (accounts for width of icon)
@@ -90,21 +101,26 @@ public class Screen {
     }
 
     public void updateLocation(float xTemp, float yTemp){
-        X = xTemp;
-        Y = yTemp;
-        historyX[0] = historyX[1];
-        historyX[1] = X;
-        historyY[0] = historyY[1];
-        historyY[1] = Y;
+        if (xTemp != historyX[1] && yTemp != historyY[1]) {
 
-        rotation = (float)Math.atan2(historyY[1] - historyY[0],historyX[1]-historyX[0])*180f/3.14f;
-        System.out.println( rotation );
+            // Set icon location with in view
+            X = xTemp;
+            Y = yTemp;
+
+            // Update history of X and Y coordinates
+            historyX[0] = historyX[1];
+            historyX[1] = X;
+            historyY[0] = historyY[1];
+            historyY[1] = Y;
+
+            // Determine required rotation based on history
+            rotation = (float)Math.toDegrees(Math.atan2(historyY[1] - historyY[0], historyX[1] - historyX[0]));
+            if (rotation < 0){rotation = rotation + 360;}
+
+            // Redraw icon
+            updateIcon();
+        }
     }
 
-/*    public float getAngle(){
-        return (float)Math.atan2(historyY.get(1) - historyY.get(0),
-                                 historyX.get(1)-historyX.get(0));
-
-    }*/
 }
 

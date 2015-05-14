@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.view.MotionEvent;
 
 /**
  * Created by lybar_000 on 5/6/2015.
@@ -29,19 +30,22 @@ public class Ball {
 
     
     // Constructor
-    public Ball(float XTemp, float YTemp , int playerIndexTemp, boolean beingPassedTemp, boolean selectionStatusTemp){
+    public Ball(float XTemp, float YTemp , int playerIndexTemp, Context mcontext){
         X = XTemp;
         Y = YTemp;
         playerIndex = playerIndexTemp;
-        beingPassed = beingPassedTemp;
-        selected = selectionStatusTemp;
+        beingPassed = false;
+        selected = false;
+
+        if (context == null) {
+            context = mcontext;
+        }
+
+        createIcon();
+        createPath();
     }
 
-    // Get context, for the purpose of accessing XML resources
-    public static void setContext(Context mcontext) {
-        if (context == null)
-            context = mcontext;
-    }
+
 
     // Create ball icon as bitmap
     public void createIcon() {
@@ -125,6 +129,107 @@ public class Ball {
     public void updateLocation(float XTemp, float YTemp){
         X = XTemp;
         Y = YTemp;
+    }
+
+    public Boolean updateStatus(Players players, Hoop hoop, Location touch) {
+        // Check distance between ball and touch event
+        // TRUE = ball double tapped
+        // FALSE = ball NOT double tapped
+        boolean distanceCheckBall = (float) icon.getWidth() / 2 >
+                euclideanDistance(X, touch.X, Y, touch.Y);
+
+        if (distanceCheckBall) {
+            // Ball double tapped, so toggle selection state
+            selected = !selected;
+
+            // Update ball icon, based on new selection state
+            createIcon();
+
+            //
+            if (playerIndex >= 0) {
+                path.moveTo(players.X[playerIndex], players.Y[playerIndex]);
+            } else {
+                path.moveTo(hoop.X, hoop.Y);
+            }
+        }
+        return distanceCheckBall;
+    }
+
+    public void updateBallPosition(MotionEvent event, Location location, Players players, Hoop hoop){
+        // Only modified ball if previously selected through double tap
+        if (selected){
+
+
+            float distance;
+            // Evaluate touch actions
+            switch (event.getAction()) {
+
+                //Touch MOVE
+                case MotionEvent.ACTION_MOVE:
+                    // Update ball location based on touch
+                    updateLocation(location.X, location.Y);
+                    break;
+
+                //Touch UP
+                case MotionEvent.ACTION_UP:
+                    for (int i = 0; i < players.PLAYER_COUNT; i++) {
+
+                        distance = euclideanDistance(location.X, players.X[i],
+                                location.Y, players.Y[i]);
+
+                        if (distance<(float)hoop.icon.getWidth()){
+                            updateBall(players.X[i], players.Y[i], i, false);
+                        }
+                        else {
+                            if (playerIndex >= 0) {
+                                updateLocation(players.X[playerIndex], players.Y[playerIndex]);
+                            }
+                            else {
+                                updateLocation(hoop.X, hoop.Y);
+                            }
+                        }
+                    }
+
+                    distance = euclideanDistance(location.X, hoop.X,
+                            location.Y, hoop.Y);
+
+                    if (distance<(float)hoop.icon.getWidth()){
+                        updateBall(hoop.X, hoop.Y, -1, false);
+                    }
+                    else {
+                        if (playerIndex >= 0) {
+                            X = players.X[playerIndex];
+                            Y = players.Y[playerIndex];
+                        }
+                        else {
+                            X = hoop.X;
+                            Y = hoop.Y;
+                        }
+                    }
+                    break;
+                default:
+            }
+        }
+        else {
+            if (playerIndex >= 0) {
+                X = players.X[playerIndex];
+                Y = players.Y[playerIndex];
+            }
+            else {
+                X = hoop.X;
+                Y = hoop.Y;
+            }
+        }
+
+
+
+
+    }
+
+
+    // Calculate Euclidean distance between points
+    private float euclideanDistance(float x1, float x2, float y1, float y2) {
+        return (float)Math.pow(Math.pow(x2 - x1, 2) + Math.pow(y2-y1, 2), 0.5);
     }
 
 }

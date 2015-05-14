@@ -104,7 +104,9 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         System.out.println("EXTERNAL CHECK:" + check);*/
 
         //Load court view
+        //setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_main);
+
         playView = (PlayView)findViewById(R.id.play);
 
 

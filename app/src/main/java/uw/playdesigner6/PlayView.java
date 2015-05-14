@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
-import android.graphics.Typeface;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -31,32 +30,26 @@ public class PlayView extends View {
     private Paint paintPlayerCircle, paintCanvas, paintPlayerText, paintPath;
     private Canvas canvasPlay;
 
-
-    private Bitmap[] iconPlayer = new Bitmap[PLAYER_COUNT];
     private Bitmap bitmapPlay;
-
-    private Path pathPlayer;
 
     //Player definition constants
     private static int PLAYER_ICON_SIZE = 40;
 
-
-    private static int selection_size = PLAYER_ICON_SIZE*1;
     private static int text_size = 30;
-    private static int text_shift = text_size*6/20;
 
     //Define initial player positions
     private static int PLAYER_COUNT = 5;
     private static int[] INITIAL_X = new int[] {400, 100, 700, 250, 550};
     private static int[] INITIAL_Y = new int[] {200, 350, 350, 500, 500};
-    public Player[] players = new Player[PLAYER_COUNT];
+    public Players players;
+    
     private Map<String,List<String>> points;
     private Ball ball;
     private Hoop hoop;
     
 
-    private List<Screen> screens = new ArrayList<Screen>();
-
+    //private List<Screen> screens = new ArrayList<Screen>();
+    private Screens screensObject = new Screens();
     // Related to animation
     private Context context;
     private android.os.Handler handler;
@@ -85,6 +78,16 @@ public class PlayView extends View {
 
         setupDrawing();
 
+        // Create players
+        players = new Players(context);
+
+        // Create ball
+        ball = new Ball(INITIAL_X[0], INITIAL_Y[0], 0, context);
+
+        // Create hoop
+        hoop = new Hoop(context);
+
+
     }
 
     // Create runnable animation thread
@@ -103,66 +106,8 @@ public class PlayView extends View {
 
     private void setupDrawing(){
 
-
-
-        paintPlayerCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintPlayerCircle.setStyle(Paint.Style.FILL);
-        paintPlayerCircle.setColor(getResources().getColor(R.color.husky_purple));
-
-
-        //Define text format
-        paintPlayerText = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintPlayerText.setTextSize(text_size);
-        paintPlayerText.setTextAlign(Paint.Align.CENTER);
-        paintPlayerText.setColor(Color.WHITE);
-        Typeface tf = Typeface.create("Helvetica", Typeface.BOLD);
-        paintPlayerText.setTypeface(tf);
-
-        //Define path format
-        paintPath = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintPath.setColor(getResources().getColor(R.color.husky_metallic_gold));
-        paintPath.setAntiAlias(true);
-        paintPath.setStrokeWidth(5);
-        paintPath.setStyle(Paint.Style.STROKE);
-        paintPath.setStrokeJoin(Paint.Join.ROUND);
-        paintPath.setStrokeCap(Paint.Cap.ROUND);
-
-
-
         // Create canvas
         paintCanvas = new Paint(Paint.DITHER_FLAG);
-
-        // Create path
-        pathPlayer = new Path();
-
-
-        // Create player icons, consisting of circle and player name/number
-        for (int i = 0; i < PLAYER_COUNT; i++) {
-            // Create array of player icons as bitmap
-            iconPlayer[i] = Bitmap.createBitmap(PLAYER_ICON_SIZE, PLAYER_ICON_SIZE, Bitmap.Config.ARGB_8888);
-
-            // Add canvas to each bitmap in array
-            Canvas temporaryCanvas = new Canvas(iconPlayer[i]);
-
-            // Draw circle on canvas, for player icon
-            temporaryCanvas.drawCircle(PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2, paintPlayerCircle);
-
-            // Add player name/number two player icon
-            temporaryCanvas.drawText(Integer.toString(i + 1), PLAYER_ICON_SIZE/2, PLAYER_ICON_SIZE/2 + text_shift,paintPlayerText);
-
-            // Initialize players, including location, name, and selection status
-            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], Integer.toString(i + 1), false);
-        }
-
-
-
-        initializeBall();
-
-        initializeHoop();
-
-
-
-
     }
 
 
@@ -184,29 +129,20 @@ public class PlayView extends View {
         //Loop on players
         for (int i=0; i<PLAYER_COUNT; i++) {
             // Place players in initial positions
-            players[i]=new Player(INITIAL_X[i], INITIAL_Y[i], Integer.toString(i + 1), false);
+            players.X[i] = INITIAL_X[i];
+            players.Y[i] = INITIAL_Y[i];
 
             //Push initial positions into map
             data = points.get(Integer.toString(i+1));
             data.add(pointsToString(INITIAL_X[i],INITIAL_Y[i]));
         }
-        initializeBall();
+        ball.X = INITIAL_X[0];
+        ball.Y = INITIAL_Y[0];
 
     }
 
-    private void initializeBall(){
-        // Initialize ball, including location and selection status
-        ball = new Ball(INITIAL_X[0], INITIAL_Y[0], 0, false, false);
-        ball.setContext(context);
-        ball.createIcon();
-        ball.createPath();
 
-    }
-    public void initializeHoop(){
-        hoop = new Hoop();
-        hoop.setContext(context);
-        hoop.createIcon();
-    }
+
     
     @Override
     // onDraw is called when:
@@ -221,7 +157,7 @@ public class PlayView extends View {
         }
 
         // Draw path
-        canvas.drawPath(pathPlayer, paintPath);
+        canvas.drawPath(players.path, players.paintPath);
         canvas.drawPath(ball.path,ball.paintPath);
 
         canvas.drawBitmap(ball.icon, ball.getX(), ball.getY(), null);
@@ -230,11 +166,11 @@ public class PlayView extends View {
         for (int i = 0; i < PLAYER_COUNT; i++) {
 
             // Determine location of player icon, with offset
-            float X = players[i].X-PLAYER_ICON_SIZE/2;
-            float Y = players[i].Y-PLAYER_ICON_SIZE/2;
+            float X = players.X[i]-PLAYER_ICON_SIZE/2;
+            float Y = players.Y[i]-PLAYER_ICON_SIZE/2;
 
             // Draw player icons on canvas
-            canvas.drawBitmap(iconPlayer[i], X, Y, null);
+            canvas.drawBitmap(players.icon[i], X, Y, null);
         }
 
         canvas.drawBitmap(hoop.icon, hoop.getX(), hoop.getY(), null);
@@ -242,28 +178,7 @@ public class PlayView extends View {
         // Need to determine if necessary
         canvas.drawBitmap(bitmapPlay, 0, 0, paintCanvas);
 
-//         canvas.drawBitmap(screen.icon,screen.X, screen.Y,screen.paint);
-        int screenCount = screens.size();
-        if (screenCount > 0) {
-            boolean[]removalList = new boolean[screenCount];
-
-            for (int i = 0; i < screenCount; i++) {
-                screens.get(i).updateLocation(players[screens.get(i).playerIndex].X,
-                                              players[screens.get(i).playerIndex].Y);
-
-                Screen screen = screens.get(i);
-                canvas.drawBitmap(screen.icon, screen.getX(), screen.getY(), null);
-                removalList[i] =  ball.playerIndex==screens.get(i).playerIndex;
-
-            }
-            for (int i = screenCount-1; i >= 0; i--){
-                if (removalList[i]){
-                    screens.remove(i);
-                }
-            }
-
-        }
-
+        screensObject.drawScreens(canvas);
 
         //Call in invalidate() using animation thread
         handler.postDelayed(runnable, FRAME_RATE);
@@ -271,40 +186,34 @@ public class PlayView extends View {
 
 
 
-
-
-
-
     //Capture and handle touch events during play recording
     // http://android-developers.blogspot.com/2010/06/making-sense-of-multitouch.html
     public boolean onTouchEvent(MotionEvent event) {
-//         Toast.makeText(context,"Touch event", Toast.LENGTH_SHORT).show();
+
         // If replaying play, stop on touch
         stopPlay();
 
         // Let gesture detector inspect actions first
-        //this.gestureDetector.onTouchEvent(event);
-
         boolean gestureDetected = gestureDetector.onTouchEvent(event);
         if (gestureDetected){
             return gestureDetected;
         }
 
-
         //Capture touch location
         Location locationTouch = locationProjected(event.getX(), event.getY());
 
-
-        if (ball.selected) {
-            updateBallPosition(event,locationTouch);
-
+        // Update player positions based on touch event
+        if (!ball.selected) {
+            points = players.updatePositions(event, locationTouch, points);
         }
-        //Update player positions, If ball not selected
-        else {
-            for (int i = 0; i < PLAYER_COUNT; i++) {
-                players[i] = updatePlayerPosition(event, locationTouch, players, i);
-            }
-        }
+
+        // screensObject.updateScreens(players, ball);
+
+        // Update ball based on touch event
+
+        ball.updateBallPosition(event, locationTouch, players, hoop);
+        //updateBallPosition(event, locationTouch);
+        screensObject.updateScreenPositions(players, ball);
 
         return true;
     }
@@ -316,34 +225,18 @@ public class PlayView extends View {
         @Override
         public boolean onDoubleTap(MotionEvent event) {
             Log.d(DEBUG_TAG, "onDoubleTap: " + event.toString());
+            Location locationTouch = locationProjected(event.getX(), event.getY());
 
-            // Check distance between ball and touch event
-            // TRUE = ball double tapped
-            // FALSE = ball NOT double tapped
-            boolean distanceCheckBall = (float) ball.icon.getWidth()/2 >
-                            euclideanDistance(ball.X, event.getX(),ball.Y, event.getY());
-            if (distanceCheckBall) {
-                // Ball double tapped, so toggle selection state
-                ball.selected = !ball.selected;
+            // Update ball selection status
+            Boolean distanceCheckBall = ball.updateStatus(players, hoop, locationTouch);
 
-                // Update ball icon, based on new selection state
-                ball.createIcon();
-
-                //
-                if (ball.playerIndex >= 0) {
-                    ball.path.moveTo(players[ball.playerIndex].X, players[ball.playerIndex].Y);
-                }
-                else {
-                    ball.path.moveTo(hoop.X, hoop.Y);
-                }
-            }
 
             for (int i = 0; i < PLAYER_COUNT; i++) {
-                boolean distanceCheckScreen = (float) iconPlayer[i].getWidth()/2 > euclideanDistance(
-                                                                    players[i].X, event.getX(),
-                                                                    players[i].Y, event.getY());
+                boolean distanceCheckScreen = (float) players.icon[i].getWidth()/2 > euclideanDistance(
+                                                                    players.X[i], event.getX(),
+                                                                    players.Y[i], event.getY());
                 if (distanceCheckScreen && !distanceCheckBall){
-                    createScreen(i);
+                    screensObject.updateScreenCount(i, context, players);
 
                 }
 
@@ -361,31 +254,10 @@ public class PlayView extends View {
 
     }
 
-    private void createScreen(int playerIndex){
-        int screenCount = screens.size();
-        boolean screenPresent = false;
-        for (int i = 0; i < screenCount; i++) {
-            if (playerIndex==screens.get(i).playerIndex){
-                screens.remove(i);
-                screenPresent = screenPresent || true;
-                break;
-            }
-        }
-        if (!screenPresent) {
 
-            Screen screen = new Screen(players[playerIndex].X, players[playerIndex].Y, playerIndex, false);
-            screen.setContext(context);
-            screen.createIcon();
-
-            screens.add(screen);
-        }
-
-
-
-    }
     //Clear canvas (Used to remove path)
     public void clearCanvas(){
-        pathPlayer.reset();
+        players.path.reset();
         ball.path.reset();
         canvasPlay.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
     }
@@ -400,146 +272,6 @@ public class PlayView extends View {
         return new Location(x_projected, y_projected);
     }
 
-
-    private void updateBallPosition(MotionEvent event, Location location){
-        // Only modified ball if previously selected through double tap
-        if (ball.selected){
-
-
-            float distance;
-            // Evaluate touch actions
-            switch (event.getAction()) {
-
-                //Touch MOVE
-                case MotionEvent.ACTION_MOVE:
-                        // Update ball location based on touch
-                        ball.updateLocation(location.X, location.Y);
-                    break;
-
-                //Touch UP
-                case MotionEvent.ACTION_UP:
-                    for (int i = 0; i < PLAYER_COUNT; i++) {
-
-                        distance = euclideanDistance(location.X, players[i].X,
-                                                     location.Y, players[i].Y);
-
-                        if (distance<(float)hoop.icon.getWidth()){
-                            ball.updateBall(players[i].X, players[i].Y, i, false);
-                        }
-                        else {
-                            if (ball.playerIndex >= 0) {
-                                ball.updateLocation(players[ball.playerIndex].X, players[ball.playerIndex].Y);
-                            }
-                            else {
-                                ball.updateLocation(hoop.X, hoop.Y);
-                            }
-                        }
-                    }
-
-                    distance = euclideanDistance(location.X, hoop.X,
-                                                 location.Y, hoop.Y);
-
-                    if (distance<(float)hoop.icon.getWidth()){
-                        ball.updateBall(hoop.X, hoop.Y, -1, false);
-                    }
-                    else {
-                        if (ball.playerIndex >= 0) {
-                            ball.X = players[ball.playerIndex].X;
-                            ball.Y = players[ball.playerIndex].Y;
-                        }
-                        else {
-                            ball.X = hoop.X;
-                            ball.Y = hoop.Y;
-                        }
-                    }
-                    break;
-                default:
-            }
-        }
-
-
-    }
-
-
-    //Update player position and selection status based on touch events
-    private Player updatePlayerPosition(MotionEvent event, Location locationTouch, Player[] players, int playerIndex) {
-        Player player = players[playerIndex];
-
-
-
-        float distanceToPlayer = Float.POSITIVE_INFINITY;
-        float minDistanceToOtherPlayers = Float.POSITIVE_INFINITY;
-        boolean obstacleEncountered = false;
-
-        for (int i = 0; i < PLAYER_COUNT; i++) {
-            float distance = euclideanDistance(locationTouch.X, players[i].X, locationTouch.Y, players[i].Y);
-            minDistanceToOtherPlayers = Math.min(distance,minDistanceToOtherPlayers);
-            obstacleEncountered = obstacleEncountered || (minDistanceToOtherPlayers < (float)PLAYER_ICON_SIZE);
-
-            if (i == playerIndex) {
-                distanceToPlayer = euclideanDistance(locationTouch.X, players[playerIndex].X,
-                        locationTouch.Y, players[playerIndex].Y);
-            }
-        }
-
-
-
-//        Touch touchEval = touchEvaluation(locationTouch);
-
-        //Create repository points traversed by player
-        List<String> data = points.get(player.name);
-
-        //Address each touch event
-        switch (event.getAction()) {
-
-            //Touch DOWN
-
-            case MotionEvent.ACTION_DOWN:
-                player.selectionStatus = (distanceToPlayer < ((float)PLAYER_ICON_SIZE)/2);
-                if(player.selectionStatus) {
-                    //pathPlayer.reset();
-                    pathPlayer.moveTo(player.X, player.Y);
-                    data.add(pointsToString(player.X, player.Y));
-                }
-                break;
-
-            //Touch MOVE
-            case MotionEvent.ACTION_MOVE:
-
-                if(player.selectionStatus && !obstacleEncountered) {
-
-                    //pathPlayer.lineTo(locationTouch.X, locationTouch.Y);
-                    float X = (locationTouch.X + players[playerIndex].X)/2;
-                    float Y = (locationTouch.Y + players[playerIndex].Y)/2;
-
-                    pathPlayer.quadTo(players[playerIndex].X, players[playerIndex].Y, X, Y);
-
-                    player.X=locationTouch.X;
-                    player.Y=locationTouch.Y;
-                    data.add(pointsToString(player.X, player.Y));
-                    if (playerIndex==ball.playerIndex){
-                        ball.X = locationTouch.X;
-                        ball.Y = locationTouch.Y;
-
-                    }
-                }
-                break;
-
-            //Touch UP
-            case MotionEvent.ACTION_UP:
-                if(player.selectionStatus) {
-                    //pathPlayer.quadTo(players[playerIndex].X,players[playerIndex].Y,locationTouch.X,locationTouch.Y);
-                    pathPlayer.lineTo(players[playerIndex].X, players[playerIndex].Y);
-                    player.selectionStatus = false;
-
-                    data.add(pointsToString(player.X, player.Y));
-                }
-                break;
-            default:
-                //return false;
-        }
-        return player;
-    }
 
     //Create string from points
     private String pointsToString(float x, float y){
@@ -571,17 +303,6 @@ public class PlayView extends View {
     private float euclideanDistance(float x1, float x2, float y1, float y2) {
         return (float)Math.pow(Math.pow(x2 - x1, 2) + Math.pow(y2-y1, 2), 0.5);
     }
-
-    /*private TouchEvaluation touchEvaluation(Location location){
-        float[] distance = new float[PLAYER_COUNT];
-        boolean[] distanceCheck = new boolean[PLAYER_COUNT];
-        int playerSelected = -1;
-
-
-        return new TouchEvaluation();
-    }*/
-
-
 
 
     // Interpolate play, such that each stage of each player has the same number of points
@@ -674,15 +395,6 @@ public class PlayView extends View {
                             distanceTarget = totalDistance[pointCount-1];
                         }
 
-
-                        //System.out.println("PtInd2 "+Integer.toString(pointIndex2) + ", Targ "
-                        //        + Float.toString(distanceTarget) + ", Dist0 " + Float.toString(totalDistance[pointIndex2])
-                        //        + ", Dist1 " + Float.toString(totalDistance[pointIndex2 + 1]));
-
-                        // Find adjacent points to interpolate, based on Target distance
-
-
-
                         // Find index preceding target value
                         int previousIndex = 0;
                         int pointIndex2 = 0;
@@ -716,7 +428,6 @@ public class PlayView extends View {
                         // Add interpolated XY points to Coordinate list
                         interpolatedCoordinates.add(XY);
                     }
-
                 }
                     // Add coordinate list to stage
                 stageList.add(interpolatedCoordinates);
@@ -765,8 +476,8 @@ public class PlayView extends View {
             float[] XY = interpolatedPlay.getXYcoordinate(playerIndex, currentStage, stageFrameCount);
 
             // Update player positions
-            players[playerIndex-1].X = XY[0];
-            players[playerIndex-1].Y = XY[1];
+            players.X[playerIndex-1] = XY[0];
+            players.Y[playerIndex-1] = XY[1];
         }
     }
 }

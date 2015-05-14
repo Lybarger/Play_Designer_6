@@ -19,16 +19,15 @@ public class Hoop {
 
     public Bitmap icon;
 
-    public Hoop(){
-
-
-    }
-
-    // Get context, for the purpose of accessing XML resources
-    public static void setContext(Context mcontext) {
-        if (context == null)
+    public Hoop(Context mcontext){
+        if (context == null) {
             context = mcontext;
+        }
+
+        createIcon();
+
     }
+
 
     public void createIcon() {
         //Define circle format
