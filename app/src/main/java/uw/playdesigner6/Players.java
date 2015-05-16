@@ -64,7 +64,13 @@ public class Players {
 
     }
 
-
+    public void reinitialize(){
+        for (int i = 0; i < PLAYER_COUNT; i++){
+            X[i] = INITIAL_X[i];
+            Y[i] = INITIAL_Y[i];
+            selectionStatus[i] = false;
+        }
+    }
 
     public void createIcon() {
         paintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -95,8 +101,9 @@ public class Players {
     }
 
     // Update player locations and build map of points
-    public Map<String,List<String>> updatePositions(MotionEvent event, Location touch, Map<String,List<String>> points) {
+    public float[] updatePositions(MotionEvent event, Location touch) {
         //Players player = players[playerIndex];
+        float[] output = new float[]{-1, -1, -1};
 
         for (int j = 0; j < PLAYER_COUNT; j++) {
 
@@ -128,7 +135,7 @@ public class Players {
                         touch.Y, Y[j]);
 
             //Create repository points traversed by player
-            List<String> data = points.get(name[j]);
+            //List<List<float[]>> data = dataPlayers.get(name[j]);
 
             //Address each touch event
             switch (event.getAction()) {
@@ -142,8 +149,14 @@ public class Players {
                         // Move path to location of current touch event
                         path.moveTo(X[j], Y[j]);
 
+                        //float[] XY = new float[] {X[j], Y[j]};
+
+                        // Create output array
+                        output[0] = j;
+                        output[1] = X[j];
+                        output[2] = Y[j];
                         // Add points to map
-                        data.add(pointsToString(X[j], Y[j]));
+                        //data.add(XY);
                     }
                     break;
 
@@ -166,8 +179,10 @@ public class Players {
                         X[j] = touch.X;
                         Y[j] = touch.Y;
 
-                        // Add points to map
-                        data.add(pointsToString(X[j], Y[j]));
+                        // Create output array
+                        output[0] = j;
+                        output[1] = X[j];
+                        output[2] = Y[j];
                     }
                     break;
 
@@ -181,8 +196,10 @@ public class Players {
                         // Toggle selection status (selection event is complete)
                         selectionStatus[j] = false;
 
-                        // Add points to map
-                        data.add(pointsToString(X[j], Y[j]));
+                        // Create output array
+                        output[0] = j;
+                        output[1] = X[j];
+                        output[2] = Y[j];
                     }
                     break;
                 default:
@@ -193,7 +210,7 @@ public class Players {
         }
 
 
-        return points;
+        return output;
     }
 
     // Create path and path format
@@ -220,5 +237,18 @@ public class Players {
     //Create string from points
     private String pointsToString(float x, float y){
         return "(" + Float.toString(x) + "," + Float.toString(y) + ")";
+    }
+
+
+    // X coordinates for insertion (accounts for width of icon)
+    public float getX(int playerIndex){
+        // Determine insertion point in view that will center icon at player position
+        return X[playerIndex]-(float)ICON_SIZE/2;
+    }
+
+    // Y coordinate for insertion (accounts for height of icon)
+    public float getY(int playerIndex){
+        // Determine insertion point in view that will center icon at player position
+        return Y[playerIndex]-(float)ICON_SIZE/2;
     }
 }

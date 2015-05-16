@@ -21,6 +21,7 @@ public class Ball {
 
     public float X; //Ball X position
     public float Y; //Ball Y position
+
     public int playerIndex; //Player with ball (Note: value of -1 denotes hoop)
     public boolean beingPassed; //Ball being passed
     public boolean selected; //Player selection status (selected by touch event)
@@ -37,6 +38,7 @@ public class Ball {
         beingPassed = false;
         selected = false;
 
+
         if (context == null) {
             context = mcontext;
         }
@@ -44,7 +46,6 @@ public class Ball {
         createIcon();
         createPath();
     }
-
 
 
     // Create ball icon as bitmap
@@ -226,6 +227,16 @@ public class Ball {
 
     }
 
+    public void reinitialize(Players players){
+        playerIndex = 0;
+        X = players.X[playerIndex];
+        Y = players.Y[playerIndex];
+        selected = false;
+
+        createIcon();
+
+
+    }
 
     // Calculate Euclidean distance between points
     private float euclideanDistance(float x1, float x2, float y1, float y2) {

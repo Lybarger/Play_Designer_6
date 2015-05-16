@@ -1,18 +1,19 @@
 package uw.playdesigner6;
 
-import java.text.BreakIterator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * Created by lybar_000 on 4/14/2015.
  */
 public class Play {
 
-    public Map<Integer,List<List<float[]>>> pointMap;
+    public Map<Integer,List<List<float[]>>> dataPlayers;
+    public List<Integer> dataBall = new ArrayList<Integer>();
+
     public int currentStage;
     public int currentPoint;
     public float stagePercentComplete;
@@ -20,26 +21,27 @@ public class Play {
 
 
 
-    public Play(Map<Integer,List<List<float[]>>> pointMapTemp, int currentStageTemp,  float stagePercentCompleteTemp, int currentPointTemp,
-                boolean playCompleteTemp){
+    public Play(Map<Integer,List<List<float[]>>> dataPlayersTemp, List<Integer> dataBallTemp){
 
 //        public Play(Map<Integer,List<List<float[]>>> pointsTemp, int currentStageTemp,  float stagePercentCompleteTemp, int currentPointTemp,
  //       boolean playCompleteTemp){
 
-        pointMap = pointMapTemp;
-        currentStage = currentStageTemp;
-        stagePercentComplete = stagePercentCompleteTemp;
-        currentPoint = currentPointTemp;
-        playComplete = playCompleteTemp;
+        dataPlayers = dataPlayersTemp;
+        dataBall = dataBallTemp;
+
+        currentStage = 0;
+        stagePercentComplete = 0;
+        currentPoint = 0;
+        playComplete = false;
 
     }
 
     public String toString(){
 
         String summary="";
-        for (int playerIndex : pointMap.keySet()){
+        for (int playerIndex : dataPlayers.keySet()){
 
-            List<List<float[]>> outerList = pointMap.get(playerIndex);
+            List<List<float[]>> outerList = dataPlayers.get(playerIndex);
             int outerListLength = outerList.size();
 
             for (int stageIndex = 0; stageIndex < outerListLength; stageIndex++) {
@@ -66,79 +68,14 @@ public class Play {
 
     }
 
-    public float[] getXYcoordinate(int playerRequest, int stageRequest, int pointRequest){
 
-        // Determine if requested player exists
-        boolean playerPresent = false;
-        for (Integer player : pointMap.keySet()) {
-            if (playerRequest == player){
-                playerPresent = true;
-                break;
-            }
-        }
 
-        // Initialize output
-        float[] XY = new float[2];
-
-        // If player present, check other requested parameters
-        if (playerPresent) {
-            List<List<float[]>> outerList = pointMap.get(playerRequest);
-
-            // Determine if requested stages present
-            boolean stagePresent = (outerList.size() >= stageRequest);
-
-            if (stagePresent) {
-                // Determine if requested pointed present
-                boolean pointPresent = (outerList.get(stageRequest).size() >= pointRequest);
-
-                if (pointPresent){
-                    XY = outerList.get(stageRequest).get(pointRequest);
-                }
-                else {System.out.println("Play.getXY: Requested point is not exist");}
-            }
-            else {System.out.println("Play.getXY: Requested stage does not exist");}
-        }
-        else {System.out.println("Play.getXY: Requested player does not exist");}
-
-        return XY;
-
-    }
-
-    public List<float[]> getXYlist(int playerRequest, int stageRequest){
-
-        // Determine if requested player exists
-        boolean playerPresent = false;
-        for (Integer player : pointMap.keySet()) {
-            if (playerRequest == player){
-                playerPresent = true;
-                break;
-            }
-        }
-
-        // Initialize output
-        List<float[]> XY = new ArrayList<float[]>();
-
-        // If player present, check other requested parameters
-        if (playerPresent) {
-            List<List<float[]>> outerList = pointMap.get(playerRequest);
-
-            // Determine if requested stages present
-            boolean stagePresent = (outerList.size() >= stageRequest);
-
-            if (stagePresent) {
-                return outerList.get(stageRequest);
-            }
-            else {System.out.println("Play.getXY: Requested stage does not exist");}
-        }
-        else {System.out.println("Play.getXY: Requested player does not exist");}
-
-        return XY;
-
-    }
 
     public int getStageCount(){
-        Object key = pointMap.keySet().toArray()[0];
-        return pointMap.get(key).size();
+        Object key = dataPlayers.keySet().toArray()[0];
+        return dataPlayers.get(key).size();
     }
+
+
 
 }

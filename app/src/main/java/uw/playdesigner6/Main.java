@@ -3,9 +3,6 @@ package uw.playdesigner6;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
@@ -16,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,14 +41,14 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     public int SERVERPORT = 4445;
 
 
-    private Paint paint_circle;
+/*    private Paint paint_circle;
     private ImageView image_court, image_play;
     private Canvas canvas_play;
-    private Bitmap bitmap_play;
+    private Bitmap bitmap_play;*/
     private PlayView playView;
 
-    private TextView text_status;
-    private Bitmap canvasBitmap;
+/*    private TextView text_status;
+    private Bitmap canvasBitmap;*/
 
     private final AppStates state_list = new AppStates("","", "", "", "");
     private String current_state;
@@ -66,22 +62,25 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     private TextView textPlayComplete;
 
     //Strings
-    private String play_filename;
+    private String playFilename;
     private String play_as_string;
     private static String xml_header = "<?xml version='1.0' encoding='UTF-8'?>" + "";
 
     //Integers
     private int currentStage = 1;
     private static int PLAYER_COUNT = 5;
-    private static int POINT_PER_STAGE = 100;
+//     private static int POINT_PER_STAGE = 100;
 
 
     //Other
-    private Map<String,List<String>> dataPoints;
-    private String fileToLoad;
+
+    private Map<Integer,List<List<float[]>>> dataPlayers = new HashMap<Integer,List<List<float[]>>>();
+    private List<Integer> dataBall = new ArrayList<Integer>();
+
+/*    private String fileToLoad;
 
     private String[] playAsArray;
-    private String playAsString;
+    private String playAsString;*/
 
     private MultiThreadingTCP multiThreadingTcp;
 
@@ -129,13 +128,14 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         updateButtonState(current_state);
 
         //Create hash map for points
-        dataPoints = new HashMap<String,List<String>>();
-        for (int i=0; i<PLAYER_COUNT; i++) {
-            List<String> data = new ArrayList<String>();
-            String name = Integer.toString(i+1);
-            dataPoints.put(name, data);
+        //dataPlayers = new HashMap<Integer,List<List<Float[]>>>();
+        for (int i=0; i<Players.PLAYER_COUNT; i++) {
+            //List<String> data = new ArrayList<String>();
+            List<List<float[]>> outerList = new ArrayList<List<float[]>>();
+            //String name = Integer.toString(i+1);
+            dataPlayers.put(i, outerList);
         }
-        playView.setupDataPoints(dataPoints);
+        playView.setupDataPoints(dataPlayers, dataBall);
         //Getting the public IP and upload it into amazon s3
         Thread ip = new GetIP();
         ip.start();
@@ -185,34 +185,34 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         return false;
     }*/
 
-    public void printMap(){
-        Set<String> keys = dataPoints.keySet();
+/*    public void printMap(){
+        Set<String> keys = dataPlayers.keySet();
         for (String key : keys) {
-            System.out.println("\nPlayer " + key +" : \n");
-            List<String> points = dataPoints.get(key);
+            System.out.println("\nPlayer " + key + " : \n");
+            List<String> points = dataPlayers.get(key);
             for (String point : points){
                 System.out.print(point);
             }
         }
-    }
+    }*/
 
     //Clear hash map
     public void mapClear(){
-        Set<String> keys = dataPoints.keySet();
-        for (String key : keys){
-            List<String> points = dataPoints.get(key);
+        Set<Integer> keys = dataPlayers.keySet();
+        for (Integer key : keys){
+            List<List<float[]>> points = dataPlayers.get(key);
             points.clear();
         }
     }
 
     //Extract last value from hash map
     public void mapLastValue(){
-        Set<String> keys = dataPoints.keySet();
-        for (String key : keys){
-            List<String> points = dataPoints.get(key);
-            String last_entry = points.get(points.size()-1);
+        Set<Integer> keys = dataPlayers.keySet();
+        for (Integer key : keys){
+            List<List<float[]>> points = dataPlayers.get(key);
+            float[] last_entry = points.get(points.size()-1).get(0);
             points.clear();
-            points.add(last_entry);
+            points.get(0).add(last_entry);
         }
     }
 
@@ -306,7 +306,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         File dir = getFilesDir();
         //File[] file_list = dir.listFiles();
         String[] filenameList = dir.list();
-        System.out.println( filenameList );
+        //System.out.println(filenameList);
 
         Bundle bundle = new Bundle();
         bundle.putStringArray("list", filenameList);
@@ -397,6 +397,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         //If replaying play, stop animation
         playView.stopPlay();
 
+        playView.initializeCourt();
+
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
         alert.setTitle("New Play");
@@ -408,8 +410,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         alert.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                play_filename = input.getText().toString();
-                textPlayName.setText(play_filename);
+                playFilename = input.getText().toString();
+                textPlayName.setText(playFilename);
                 current_state = state_list.INITIALIZING;
                 updateButtonState(current_state);
             }
@@ -423,7 +425,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         alert.show();
 
-        playView.initializeCourt();
+
         play_as_string = xml_header + "<play>";
 
     }
@@ -440,7 +442,13 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         currentStage=1;
         textCurrentStage.setText(Integer.toString(currentStage));
 
-        mapLastValue();
+        //mapLastValue();
+
+        // TODO
+        // Call PlayThe you function to handle initialization
+        //playView.clearData();
+        //System.out.println("Size after Initialization:" +Integer.toString(dataPlayers.get(0).size()));
+        playView.saveLastPoint();
         playView.clearCanvas();
     }
 
@@ -449,11 +457,15 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         //If replaying play, stop animation
         playView.stopPlay();
 
-        play_as_string = concatenateStage(play_as_string);
-        currentStage++;
-        textCurrentStage.setText(Integer.toString(currentStage));
-        mapClear();
+        //play_as_string = concatenateStage(play_as_string);
+        //currentStage++;
+        //textCurrentStage.setText(Integer.toString(currentStage));
+
+        //mapClear();
+
+        playView.incrementStage();
         playView.clearCanvas();
+        //playView.clearCanvas();
 
     }
 
@@ -461,19 +473,39 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     {
         //If replaying play, stop animation
         playView.stopPlay();
-        playView.initializeCourt();
 
         textPlayComplete.setText("complete");
         current_state= state_list.COMPLETE;
-        playView.clearCanvas();
-        //concatenateStage();
+
         updateButtonState(current_state);
-        play_as_string = concatenateStage(play_as_string);
-        mapClear();
-        // System.out.println(play_as_string);
-        play_as_string= play_as_string + "</play>";
-        String play_filename_full = play_filename + ".XML";
-        writeToFile(play_filename_full, play_as_string);
+        //play_as_string = concatenateStage(play_as_string);
+        String playAsString = convertPlayToXML();
+        String play_filename_full = playFilename + ".XML";
+        writeToFile(play_filename_full, playAsString);
+       // playView.clearData();
+        playView.initializeCourt();
+
+
+    }
+
+    public void printData(){
+        Set<Integer> keys = dataPlayers.keySet();
+        for (Integer key : keys){
+            List<List<float[]>> stages = dataPlayers.get(key);
+            int stageCount = stages.size();
+            for (int currentStage = 0; currentStage < stageCount; currentStage++) {
+                List<float[]> points = stages.get(currentStage);
+                int pointCount = points.size();
+                for (int currentPoint = 0; currentPoint < pointCount; currentPoint++){
+                    String player = Integer.toString(key);
+                    String stage = Integer.toString(currentStage);
+                    String X = Float.toString(points.get(currentPoint)[0]);
+                    String Y = Float.toString(points.get(currentPoint)[1]);
+
+                   // System.out.println(player + ", " + ", " + stage + ", " + X + ", " + Y);
+                }
+            }
+        }
 
     }
 
@@ -560,7 +592,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     // Write play to XML file
     public void writeToFile(String filename, String string){
         /* Checks if external storage is available for read and write */
-        System.out.println(string);
+        //System.out.println(string);
 
         FileOutputStream outputStream;
 
@@ -574,8 +606,73 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
     }
 
+
+    public String convertPlayToXML() {
+        String n = "\n";
+
+        String t = "    ";
+        t = "";
+
+        String playAsString = "<?xml version='1.0' encoding='UTF-8'?> " + n;
+        playAsString = playAsString + "<play>" + n;
+        // Set of keys
+        Set<Integer> players = dataPlayers.keySet();
+
+        // Number of stages in play
+        //players.iterator().next() TODO
+        int stageCount = dataPlayers.get(0).size();
+
+        // Loop on stages
+        for (int currentStage = 0; currentStage < stageCount; currentStage++) {
+
+            playAsString += "<stage>" + n;
+
+            playAsString += "<ball>";
+
+            playAsString += Integer.toString(dataBall.get(currentStage));
+
+            playAsString += "</ball>" + n;
+
+            // Loop on players
+            for (Integer player : players) {
+
+                // Data for given stage and player
+                List<float[]> data = dataPlayers.get(player).get(currentStage);
+
+                // Number of points
+                int pointCount = data.size();
+
+                String pointsAsString = "";
+
+                for (int currentPoint = 0; currentPoint < pointCount; currentPoint++) {
+                    // Points as string, comma delimited
+                    pointsAsString = pointsAsString
+                                    + Float.toString(data.get(currentPoint)[0])+
+                                "," + Float.toString(data.get(currentPoint)[1]);
+
+                    // Separate pairs of coordinates with a semicolon
+                    if (currentPoint < pointCount-1){
+                        pointsAsString = pointsAsString + ";";
+
+                    }
+                }
+
+                playAsString = playAsString +
+                        "<player>" + n +
+                        t + "<id>" + Integer.toString(player) + "</id>" + n +
+                        t + "<xy>" + pointsAsString + "</xy>" + n +
+                        "</player>" + n;
+            }
+            playAsString = playAsString + "</stage>" + n;
+        }
+        playAsString = playAsString + "</play>";
+        System.out.println( "=============================================");
+        System.out.println(playAsString);
+        return playAsString;
+    }
+
     // Concatenate most recent stage for file recording
-    //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
+/*    //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
     public String concatenateStage(String stage) {
 
         String format =
@@ -604,12 +701,12 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
             ;
 
          return stage + String.format(format,
-                dataPoints.get("1"),
-                dataPoints.get("2"),
-                dataPoints.get("3"),
-                dataPoints.get("4"),
-                dataPoints.get("5"));
-    }
+                 dataPlayers.get("1"),
+                 dataPlayers.get("2"),
+                 dataPlayers.get("3"),
+                 dataPlayers.get("4"),
+                 dataPlayers.get("5"));
+    }*/
 
     // Replay play
     public void readPlayFromFile(String filename){
@@ -629,7 +726,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         XMLParser parser = new XMLParser();
 
         // Parse XML play into map
-        Map<Integer,List<List<float[]>>> currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
+        Play currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
         // Send play to view for playing
         playView.startPlay(currentPlay);
 

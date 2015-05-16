@@ -64,6 +64,8 @@ public class Screens {
 
     }
 
+
+
     public void updateScreenCount(int playerIndex, Context context, Players players){
         int screenCount = screens.size();
         boolean screenPresent = false;
@@ -87,23 +89,18 @@ public class Screens {
 
 
     }
-/*    for (int i = 0; i < PLAYER_COUNT; i++) {
-        boolean distanceCheckScreen = (float) players.icon[i].getWidth()/2 > euclideanDistance(
-                players.X[i], event.getX(),
-                players.Y[i], event.getY());
-        if (distanceCheckScreen && !distanceCheckBall){
-            createScreen(i);
 
+    public void clearAll(){
+        int screenCount = screens.size();
+        if (screenCount > 0) {
+            // Remove screens if player has ball
+            for (int i = screenCount - 1; i >= 0; i--) {
+                screens.remove(i);
+            }
         }
 
-    }*/
+    }
 
 
-/*    public void createScreen(int playerIndex){
-
-
-
-
-    }*/
 
 }
