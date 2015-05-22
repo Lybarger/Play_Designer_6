@@ -13,6 +13,7 @@ public class Play {
 
     public Map<Integer,List<List<float[]>>> dataPlayers;
     public List<Integer> dataBall = new ArrayList<Integer>();
+    public Map<Integer,List<List<float[]>>> dataScreens;
 
     public int currentStage;
     public int currentPoint;
@@ -28,6 +29,7 @@ public class Play {
 
         dataPlayers = dataPlayersTemp;
         dataBall = dataBallTemp;
+        //dataScreens = dataScreensTemp;
 
         currentStage = 0;
         stagePercentComplete = 0;

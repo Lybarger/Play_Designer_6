@@ -13,7 +13,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,12 +48,13 @@ public class PlayView extends View {
     private Map<Integer,List<List<float[]>>> dataPlayers;
     private List<Integer> dataBall = new ArrayList<Integer>();
 
+
     private Ball ball;
     private Hoop hoop;
     
 
     //private List<Screen> screens = new ArrayList<Screen>();
-    private Screens screensObject = new Screens();
+    //private Screens screensObject = new Screens();
     // Related to animation
     private Context context;
     private android.os.Handler handler;
@@ -66,8 +66,10 @@ public class PlayView extends View {
 
     private boolean playExisting = false;
     private final int STAGE_LENGTH = 3;   //Time in seconds
-    private int stageFrameCount = 0;
-    private int currentStage = 0;
+
+    private int frame = 0;
+    private int stage = 0;
+    private int playPauseCount = 0;
     private PlayInterpolated interpolatedPlay;
     private int FRAMES_PER_STAGE = FRAME_RATE*STAGE_LENGTH;
 
@@ -116,6 +118,7 @@ public class PlayView extends View {
 
         this.dataPlayers = dataPlayersTemp;
         this.dataBall = dataBallTemp;
+
         addStageToMap();
     }
 
@@ -138,7 +141,7 @@ public class PlayView extends View {
         clearData();
 
         // Reset stage
-        currentStage = 0;
+        stage = 0;
 
         // Reinitialize player positions
         players.reinitialize();
@@ -147,7 +150,7 @@ public class PlayView extends View {
         ball.reinitialize(players);
 
         // Remove all screens
-        screensObject.clearAll();
+        //screensObject.clearAll();
 
         // Add first stage to map
         addStageToMap();
@@ -166,26 +169,26 @@ public class PlayView extends View {
 
     public void saveLastPoint(){
 
-        // Get a set of keys
-        Set<Integer> keys = dataPlayers.keySet();
-
         // Loop on keys (players)
-        for (Integer key : keys){
+        for (Integer key : dataPlayers.keySet()){
 
             // Put last XY coordinates into a list
             List<float[]> initialStage = new ArrayList<float[]>();
+            initialStage.add(players.getCurrentData(key));
 
             // Clear all data for selected key (player)
             dataPlayers.get(key).clear();
 
             // Add list with last XY coordinates
             dataPlayers.get(key).add(initialStage);
-            dataPlayers.get(key).get(0).add(new float[]{players.X[key], players.Y[key]});
+            //dataPlayers.get(key).get(0).add(new float[]{players.X[key], players.Y[key]});
         }
+
+
 
         dataBall.add(ball.playerIndex);
 
-        currentStage = 0;
+        stage = 0;
 
     }
 
@@ -214,7 +217,7 @@ public class PlayView extends View {
 
     // Increment stage (called by Main on button click)
     public void incrementStage(){
-        currentStage++;
+        stage++;
         dataBall.add(ball.playerIndex);
         addStageToMap();
     }
@@ -225,7 +228,7 @@ public class PlayView extends View {
         for (Integer key : keys){
             List<float[]> newStage = new ArrayList<float[]>();
 
-            newStage.add(new float[]{players.X[key],players.Y[key]});
+            newStage.add(players.getCurrentData(key));
             dataPlayers.get(key).add(newStage);
 
         }
@@ -245,33 +248,24 @@ public class PlayView extends View {
         }
 
         // Draw path
-        canvas.drawPath(players.path, players.paintPath);
-        canvas.drawPath(ball.path,ball.paintPath);
+
+        canvas.drawPath(ball.path, ball.paintPath);
 
         canvas.drawBitmap(ball.icon, ball.getX(), ball.getY(), null);
 
-        // Update player icon positions
-        for (int i = 0; i < PLAYER_COUNT; i++) {
-
-            // Determine location of player icon, with offset
-            float X = players.getX(i);
-            float Y = players.getY(i);
-
-            // Draw player icons on canvas
-            canvas.drawBitmap(players.icon[i], X, Y, null);
-        }
+        players.updateCanvas(canvas);
 
         canvas.drawBitmap(hoop.icon, hoop.getX(), hoop.getY(), null);
 
         // Need to determine if necessary
         canvas.drawBitmap(bitmapPlay, 0, 0, paintCanvas);
 
-        screensObject.drawScreens(canvas);
+        //screensObject.drawScreens(canvas);
 
         //Call in invalidate() using animation thread
         handler.postDelayed(runnable, FRAME_RATE);
 
-        //canvas.drawText(Integer.toString(currentStage), 100, 100, new Paint());
+        //canvas.drawText(Integer.toString(stage), 100, 100, new Paint());
         //canvas.drawText(Integer.toString(dataPlayers.get(0).size()), 100, 150, new Paint());
     }
 
@@ -299,16 +293,18 @@ public class PlayView extends View {
             // [0] = player index
             // [1] = player X coordinate
             // [2] = player Y coordinate
-            float[] x = players.updatePositions(event, locationTouch);
+            int playerIndex = players.updatePositions(event, locationTouch);
 
             // If player position changed, update map
-            if (x[0] >= 0) {
-                float[] XY = new float[]{x[1], x[2]};
-                dataPlayers.get((int)x[0]).get(currentStage).add(XY);
+            if (playerIndex >= 0) {
+                //float[] XY = new float[]{x[1], x[2]};
+                float[] temp = players.getCurrentData(playerIndex);
+                System.out.println(temp[3]);
+                dataPlayers.get(playerIndex).get(stage).add(players.getCurrentData(playerIndex));
             }
         }
 
-        // screensObject.updateScreens(players, ball);
+        // screensObject.updateScreens(tempplayers, ball);
 
         // Update ball based on touch event
 
@@ -316,12 +312,13 @@ public class PlayView extends View {
         ball.updateBallPosition(event, locationTouch, players, hoop);
         int currentPlayerWithBall = ball.playerIndex;
         if (previousPlayerWithBall != currentPlayerWithBall){
+            players.updateScreenState2(ball);
             incrementStage();
-            incrementStage();
+            //incrementStage();
 
         }
         //updateBallPosition(event, locationTouch);
-        screensObject.updateScreenPositions(players, ball);
+        //screensObject.updateScreenPositions(players, ball);
 
         return true;
     }
@@ -338,17 +335,8 @@ public class PlayView extends View {
             // Update ball selection status
             Boolean distanceCheckBall = ball.updateStatus(players, hoop, locationTouch);
 
-
-            for (int i = 0; i < PLAYER_COUNT; i++) {
-                boolean distanceCheckScreen = (float) players.icon[i].getWidth()/2 > euclideanDistance(
-                                                                    players.X[i], event.getX(),
-                                                                    players.Y[i], event.getY());
-                if (distanceCheckScreen && !distanceCheckBall){
-                    screensObject.updateScreenCount(i, context, players);
-
-                }
-
-            }
+            // Update screen state (dispayed or hidden)
+            players.updateScreenState(event, ball);
 
             return true;
         }
@@ -362,7 +350,10 @@ public class PlayView extends View {
 
     //Clear canvas (Used to remove path)
     public void clearCanvas(){
-        players.path.reset();
+
+        for (Integer key : dataPlayers.keySet()) {
+            players.path[key].reset();
+        }
         ball.path.reset();
         canvasPlay.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
     }
@@ -395,11 +386,24 @@ public class PlayView extends View {
         Play originalPlay = playMap;
 
         // Set current (initial) stage index to 0
-        currentStage = 0;
-        stageFrameCount = -1;
+        stage = 0;
+        frame = 0;
 
         // Interpolate play, such that each stage of each player has the same number of points
         interpolatedPlay = new PlayInterpolated(originalPlay, hoop);
+
+        // Update player and ball initial positions
+        for (int playerIndex : interpolatedPlay.dataPlayers.keySet()){
+            players.updateXY(playerIndex, interpolatedPlay.getXYcoordinate(playerIndex, 0, 0));
+        }
+        ball.updateXY(interpolatedPlay.dataBall.get(0).get(0));
+
+        // Reset paths and move to initial positions
+        players.pathsReset();
+        players.pathsMoveToPlayerPositions();
+        ball.path.reset();
+        ball.path.moveTo(ball.X, ball.Y);
+
     }
 
     // Stop play replay
@@ -440,57 +444,82 @@ public class PlayView extends View {
         //List<float[]> coordinatesAsList;
 
 // Determine if end of stage reached
-        if (stageFrameCount >= FRAMES_PER_STAGE-1){
+        if (frame >= FRAMES_PER_STAGE-1){
 
             // Increment stage
-            currentStage++;
+            stage++;
+            // Reset frame counter within stage
+            frame = 0;
 
             // Determine if end of play reached
-            if (currentStage >= interpolatedPlay.getStageCount()){
+            if (stage >= interpolatedPlay.getStageCount()){
+/*
+                if (playPauseCount<FRAMES_PER_STAGE){
+                    playPauseCount7++;
+                }
+                else {*/
+//                    playPauseCount = 0;
+
                 // Reset stage
-                currentStage = 0;
+                stage = 0;
+
+                // Reset paths
+                players.pathsReset();
                 ball.path.reset();
-                float[] initialBallPosition = interpolatedPlay.dataBall.get(currentStage).get(stageFrameCount);
-                ball.path.moveTo(initialBallPosition[0], initialBallPosition[1]);
-                players.path.reset();
+
+                // Update player and ball location to initial starting positions
+                for (int i : interpolatedPlay.dataPlayers.keySet()) {
+                    //players.updateXY(i, interpolatedPlay.getXYcoordinate(i, stage, frame));
+                    //float[] xx = ;
+                    players.updateData(i, interpolatedPlay.getData(i,stage,frame));
+//System.out.println( "player" + players.X[1]);
+                    //System.out.println("Playview " +Float.toString(xx[0]) + " " + Float.toString(xx[1]) + " " + Float.toString(xx[2]) + " " + Float.toString(xx[3]));
+                    //System.out.println(players.screenPresent[i]);
+                    //System.out.println(players.screenAngle[i]);
+                    //players.screenPresent[i]=true;
+                }
+                ball.updateXY(interpolatedPlay.dataBall.get(stage).get(frame));
+
+                // Move paths to initial starting locations
+                players.pathsMoveToPlayerPositions();
+                ball.pathMoveToPosition();
+
             }
-            // Reset frame counter within stage
-            stageFrameCount = 0;
+
         }
         else{
             // Increment frame count within stage
-            stageFrameCount++;
+            frame++;
         }
+
+        ball.updateXY(interpolatedPlay.dataBall.get(stage).get(frame));
+        ball.beingPassed = true;
 
         // Loop on players
         for (int playerIndex : interpolatedPlay.dataPlayers.keySet()){
-            // Extract relevant XY coordinates
-            float[] XY = interpolatedPlay.getXYcoordinate(playerIndex, currentStage, stageFrameCount);
+            // Store previous XY coordinates
+            float Xprevious = players.X[playerIndex];
+            float Yprevious = players.Y[playerIndex];
 
             // Update player positions
-            if (currentStage == 0 && stageFrameCount == 0) {
-                players.X[playerIndex] = XY[0];
-                players.Y[playerIndex] = XY[1];
-                players.path.moveTo(players.X[playerIndex], players.Y[playerIndex]);
-            }
-            else {
-                players.path.moveTo(players.X[playerIndex], players.Y[playerIndex]);
-                players.X[playerIndex] = XY[0];
-                players.Y[playerIndex] = XY[1];
-            }
+            players.updateData(playerIndex, interpolatedPlay.getData(playerIndex, stage, frame));
 
-            players.path.lineTo(players.X[playerIndex], players.Y[playerIndex]);
+            // Determine average XY coordinates for quadratic interpolation
+            float Xavg = (Xprevious + players.X[playerIndex])/2;
+            float Yavg = (Yprevious + players.Y[playerIndex])/2;
+
+            // Update player paths using quadratic interpolation
+            players.path[playerIndex].quadTo(Xprevious, Yprevious, Xavg, Yavg);
+
+            // Determine if player has bought all or if ball is being passed
+            boolean playerHasBall = ((ball.X == players.X[playerIndex])&&(ball.Y == players.Y[playerIndex]));
+            ball.beingPassed = ball.beingPassed && !playerHasBall;
         }
 
-        if (currentStage == 0 && stageFrameCount == 0) {
-            float[] initialBallPosition = interpolatedPlay.dataBall.get(currentStage).get(stageFrameCount);
-            ball.path.moveTo(initialBallPosition[0], initialBallPosition[1]);
-        }
-        ball.X = interpolatedPlay.dataBall.get(currentStage).get(stageFrameCount)[0];
-        ball.Y = interpolatedPlay.dataBall.get(currentStage).get(stageFrameCount)[1];
-        ball.path.lineTo(ball.X,ball.Y);
-
-
+        // If ball is being passed, then draw path
+        if (ball.beingPassed){ball.path.lineTo(ball.X,ball.Y); }
+        // If player has ball, then do not draw path
+        else {ball.path.moveTo(ball.X,ball.Y);}
 
     }
 }

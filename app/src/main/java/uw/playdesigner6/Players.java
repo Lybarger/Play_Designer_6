@@ -4,14 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Typeface;
 import android.view.MotionEvent;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by lybar_000 on 4/2/2015.
@@ -23,43 +20,64 @@ public class Players {
     private static float[] INITIAL_X = new float[] {400, 100, 700, 250, 550};
     private static float[] INITIAL_Y = new float[] {200, 350, 350, 500, 500};
     private static String[] NAMES = new String[] {"1", "2", "3", "4", "5"};
+    private int WIDTH_SCREEN = 100;
+    private int HEIGHT_SCREEN = 100;
 
 
     public float X[] = new float[PLAYER_COUNT]; //Player X positions
+    private float Xp[] = new float[PLAYER_COUNT];
     public float Y[] = new float[PLAYER_COUNT]; //Player Y positions
+    private float Yp[] = new float[PLAYER_COUNT];
     public String[] name = new String[PLAYER_COUNT]; //Player name (ID)
+    public boolean[] screenPresent = new boolean[PLAYER_COUNT];
+    public float[] screenAngle = new float[PLAYER_COUNT];
 
     public Boolean[] selectionStatus = new Boolean[PLAYER_COUNT]; //Player selection status (selected by touch event)
     public Bitmap[] icon = new Bitmap[PLAYER_COUNT];
-
-    public Path path;
+    public Bitmap[] iconScreenOriginal = new Bitmap[PLAYER_COUNT];
+    public Bitmap[] iconScreen = new Bitmap[PLAYER_COUNT];
+    private Matrix matrix = new Matrix();
+    public Path[] path = new Path[PLAYER_COUNT];
 
     private static Context context;
-    public Paint paintCircle, paintText, paintPath;
-    private static int LINEWIDTH = 4;
+    public Paint paintCircle, paintText, paintPath, paintScreen;
+    private static int LINEWIDTH = 3;
     private static int ICON_SIZE = 40;
 
     private static int TEXT_SIZE = 30;
     private static int TEXT_SHIFT = TEXT_SIZE*6/20;
 
     public Players(Context mcontext){
-
+        if (context == null) {
+            context = mcontext;
+        }
+        //Define path format
+        paintPath = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paintPath.setColor(context.getResources().getColor(R.color.husky_metallic_gold));
+        paintPath.setAntiAlias(true);
+        paintPath.setStrokeWidth(LINEWIDTH);
+        paintPath.setStyle(Paint.Style.STROKE);
+        paintPath.setStrokeJoin(Paint.Join.ROUND);
+        paintPath.setStrokeCap(Paint.Cap.ROUND);
 
         for (int i = 0; i < PLAYER_COUNT; i++){
             X[i] = INITIAL_X[i];
+            //Xprevious[i] = X[i];
             Y[i] = INITIAL_Y[i];
+            //Yprevious[i] = Y[i];
             name[i] = NAMES[i];
-
+            path[i] = new Path();
+            screenPresent[i] = false;
+            screenAngle[i] = 0;
             selectionStatus[i] = false;
         }
 
 
-        if (context == null) {
-            context = mcontext;
-        }
 
-        createIcon();
-        createPath();
+
+        createIcons();
+        createScreenIcons();
+       // createPath();
 
 
     }
@@ -69,10 +87,12 @@ public class Players {
             X[i] = INITIAL_X[i];
             Y[i] = INITIAL_Y[i];
             selectionStatus[i] = false;
+            screenPresent[i] = false;
+            screenAngle[i] = 0;
         }
     }
 
-    public void createIcon() {
+    public void createIcons() {
         paintCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
         paintCircle.setStyle(Paint.Style.FILL);
         paintCircle.setColor(context.getResources().getColor(R.color.husky_purple));
@@ -100,10 +120,59 @@ public class Players {
         }
     }
 
+    public void createScreenIcons() {
+        paintScreen = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paintScreen.setStyle(Paint.Style.STROKE);
+        paintScreen.setTextAlign(Paint.Align.CENTER);
+        paintScreen.setStrokeWidth(LINEWIDTH);
+        paintScreen.setColor(context.getResources().getColor(R.color.husky_dark_gray));
+
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+
+        // Create temporary icon and canvas
+        iconScreenOriginal[i] = Bitmap.createBitmap(WIDTH_SCREEN + LINEWIDTH, HEIGHT_SCREEN + LINEWIDTH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(iconScreenOriginal[i]);
+
+        // Create T shaped drawing
+        canvas.drawLine((float) HEIGHT_SCREEN * 3 / 4, (float) WIDTH_SCREEN / 2, HEIGHT_SCREEN, (float) WIDTH_SCREEN / 2, paintScreen);
+        canvas.drawLine(HEIGHT_SCREEN, WIDTH_SCREEN / 3, HEIGHT_SCREEN, WIDTH_SCREEN * 2 / 3, paintScreen);
+        //canvas.drawRect(0,0,WIDTH,HEIGHT,paint);
+
+        // Create rotation matrix
+        //rotation = 0;
+        matrix.setRotate(screenAngle[i]);
+
+        // Create rotated icon, based on rotation matrix
+        iconScreen[i] = Bitmap.createBitmap(iconScreenOriginal[i], 0, 0, iconScreenOriginal[i].getWidth(), iconScreenOriginal[i].getHeight(), matrix, true);
+        }
+    }
+
+    public void updateScreenIcons(){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            if (screenPresent[i]) {
+                matrix.setRotate(screenAngle[i]);
+
+                // Create rotated icon, based on rotation matrix
+                iconScreen[i] = Bitmap.createBitmap(iconScreenOriginal[i], 0, 0, iconScreenOriginal[i].getWidth(), iconScreenOriginal[i].getHeight(), matrix, true);
+            }
+        }
+    }
+
+    public void updateScreenIcon(int i){
+
+            if (screenPresent[i]) {
+                matrix.setRotate(screenAngle[i]);
+
+                // Create rotated icon, based on rotation matrix
+                iconScreen[i] = Bitmap.createBitmap(iconScreenOriginal[i], 0, 0, iconScreenOriginal[i].getWidth(), iconScreenOriginal[i].getHeight(), matrix, true);
+            }
+
+    }
     // Update player locations and build map of points
-    public float[] updatePositions(MotionEvent event, Location touch) {
+    public int updatePositions(MotionEvent event, Location touch) {
         //Players player = players[playerIndex];
-        float[] output = new float[]{-1, -1, -1};
+        //float[] output = new float[]{-1, -1, -1};
+        int output = -1;
 
         for (int j = 0; j < PLAYER_COUNT; j++) {
 
@@ -147,14 +216,14 @@ public class Players {
 
                     if (selectionStatus[j]) {
                         // Move path to location of current touch event
-                        path.moveTo(X[j], Y[j]);
+                        path[j].moveTo(X[j], Y[j]);
 
                         //float[] XY = new float[] {X[j], Y[j]};
-
+                        output = j;
                         // Create output array
-                        output[0] = j;
-                        output[1] = X[j];
-                        output[2] = Y[j];
+                        //output[0] = j;
+                        //output[1] = X[j];
+                        //output[2] = Y[j];
                         // Add points to map
                         //data.add(XY);
                     }
@@ -173,16 +242,27 @@ public class Players {
                         float avgY = (touch.Y + Y[j]) / 2;
 
                         // Build path using quadratic
-                        path.quadTo(X[j], Y[j], avgX, avgY);
+                        path[j].quadTo(X[j], Y[j], avgX, avgY);
 
                         // Set jth player location
+                        screenAngle[j] = (float)Math.toDegrees(Math.atan2(touch.Y - Y[j], touch.X - X[j]));
+                        if (screenAngle[j] < 0){screenAngle[j] = screenAngle[j] + 360;}
+
+                        if(screenPresent[j]){
+                            //if(screenPresent[j] && (X[j] != touch.X)){
+
+
+                            // Redraw icon
+                            updateScreenIcon(j);
+                        }
+
                         X[j] = touch.X;
                         Y[j] = touch.Y;
-
+                        output = j;
                         // Create output array
-                        output[0] = j;
-                        output[1] = X[j];
-                        output[2] = Y[j];
+                        //output[0] = j;
+                        //output[1] = X[j];
+                        //output[2] = Y[j];
                     }
                     break;
 
@@ -191,15 +271,16 @@ public class Players {
                     if (selectionStatus[j]) {
 
                         // Complete path outline
-                        path.lineTo(X[j], Y[j]);
+                        path[j].lineTo(X[j], Y[j]);
 
                         // Toggle selection status (selection event is complete)
                         selectionStatus[j] = false;
 
+                        output = j;
                         // Create output array
-                        output[0] = j;
-                        output[1] = X[j];
-                        output[2] = Y[j];
+                        //output[0] = j;
+                        //output[1] = X[j];
+                        //output[2] = Y[j];
                     }
                     break;
                 default:
@@ -213,21 +294,16 @@ public class Players {
         return output;
     }
 
+/*
     // Create path and path format
     public void createPath(){
         // Define formatting for path
-        //Define path format
-        paintPath = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintPath.setColor(context.getResources().getColor(R.color.husky_metallic_gold));
-        paintPath.setAntiAlias(true);
-        paintPath.setStrokeWidth(5);
-        paintPath.setStyle(Paint.Style.STROKE);
-        paintPath.setStrokeJoin(Paint.Join.ROUND);
-        paintPath.setStrokeCap(Paint.Cap.ROUND);
+
 
         // Create path
         path = new Path();
     }
+*/
 
     // Calculate Euclidean distance between points
     private float euclideanDistance(float x1, float x2, float y1, float y2) {
@@ -251,4 +327,133 @@ public class Players {
         // Determine insertion point in view that will center icon at player position
         return Y[playerIndex]-(float)ICON_SIZE/2;
     }
+
+    public void pathMoveToPlayerPosition(int i){
+        path[i].moveTo(X[i], Y[i]);
+    }
+
+    public void pathsMoveToPlayerPositions(){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            pathMoveToPlayerPosition(i);
+        }
+    }
+
+    public void pathLineToPlayerPosition(int i){
+        path[i].lineTo(X[i], Y[i]);
+    }
+
+    public void pathsLineToPlayerPositions(){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            pathLineToPlayerPosition(i);
+        }
+    }
+
+    public void pathQuadToPlayerPosition(int i, float x, float y){
+        path[i].quadTo(X[i], Y[i], (X[i] + x) / 2, (Y[i] + y) / 2);
+    }
+
+    public void pathsQuadToPlayerPositions(float[] x, float[] y){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            pathQuadToPlayerPosition(i, x[i], y[i]);
+        }
+    }
+
+    public void updateXY(int i, float[] XY){
+        X[i] = XY[0];
+        Y[i] = XY[1];
+    }
+
+    public void updateData(int i, float[] data){
+        X[i] = data[0];
+        Y[i] = data[1];
+        screenPresent[i] = data[2]==1;
+        screenAngle[i] = data[3];
+        if (screenPresent[i]){
+            updateScreenIcon(i);
+        }
+
+
+    }
+    /*public void updateXYFromPlay(float[] x, float[] y){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            X[i] = x[i];
+            Y[i] = y[i];
+        }
+    }
+*/
+    public void pathsReset(){
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            path[i].reset();
+        }
+    }
+
+    // X coordinates for insertion (accounts for width of icon)
+    public float getScreenX(int i){
+        // Determine insertion point in view that will center icon at player position
+        return X[i] -(float)iconScreen[i].getWidth() / 2;
+    }
+
+    // Y coordinate for insertion (accounts for height of icon)
+    public float getScreenY(int i){
+        // Determine insertion point in view that will center icon at player position
+        return Y[i] -(float)iconScreen[i].getHeight() / 2;
+    }
+
+
+    public void updateCanvas(Canvas canvas){
+        // Update player icon positions
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+
+            // Draw player icons on canvas
+            canvas.drawBitmap(icon[i], getX(i), getY(i), null);
+            canvas.drawPath(path[i], paintPath);
+
+            if (screenPresent[i]){
+                canvas.drawBitmap(iconScreen[i],getScreenX(i),getScreenY(i),null);
+            }
+        }
+
+    }
+
+    // Determine whether or not screen is displayed based on touch event and ball
+    public void updateScreenState(MotionEvent event, Ball ball){
+
+
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            boolean distanceCheckScreen = (float) icon[i].getWidth()/2
+                    > euclideanDistance(X[i], event.getX(), Y[i], event.getY());
+            boolean ballCheck = ball.playerIndex != i;
+
+            if (!ballCheck){
+                screenPresent[i] = false;
+            }
+            else if(distanceCheckScreen && ballCheck) {
+                screenPresent[i] = !screenPresent[i];
+            }
+
+        }
+    }
+
+    // Determine whether or not screen is displayed based on touch event and ball
+    public void updateScreenState2(Ball ball){
+
+
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+
+            boolean ballCheck = ball.playerIndex != i;
+
+            if (!ballCheck){
+                screenPresent[i] = false;
+            }
+
+
+        }
+    }
+
+    public float[] getCurrentData(int i){
+
+        return new float[] {X[i], Y[i], screenPresent[i]?1.0f:0.0f, screenAngle[i]};
+
+    }
+
 }

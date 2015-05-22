@@ -77,6 +77,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     private Map<Integer,List<List<float[]>>> dataPlayers = new HashMap<Integer,List<List<float[]>>>();
     private List<Integer> dataBall = new ArrayList<Integer>();
 
+
+
 /*    private String fileToLoad;
 
     private String[] playAsArray;
@@ -648,7 +650,9 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                     // Points as string, comma delimited
                     pointsAsString = pointsAsString
                                     + Float.toString(data.get(currentPoint)[0])+
-                                "," + Float.toString(data.get(currentPoint)[1]);
+                                "," + Float.toString(data.get(currentPoint)[1])+
+                                "," + Float.toString(data.get(currentPoint)[2])+
+                                "," + Float.toString(data.get(currentPoint)[3]);
 
                     // Separate pairs of coordinates with a semicolon
                     if (currentPoint < pointCount-1){
@@ -660,7 +664,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                 playAsString = playAsString +
                         "<player>" + n +
                         t + "<id>" + Integer.toString(player) + "</id>" + n +
-                        t + "<xy>" + pointsAsString + "</xy>" + n +
+                        t + "<data>" + pointsAsString + "</data>" + n +
                         "</player>" + n;
             }
             playAsString = playAsString + "</stage>" + n;
@@ -727,7 +731,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
         // Parse XML play into map
         Play currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
-        // Send play to view for playing
+
+                // Send play to view for playing
         playView.startPlay(currentPlay);
 
     }

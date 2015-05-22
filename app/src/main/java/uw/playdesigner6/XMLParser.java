@@ -134,8 +134,10 @@ public class XMLParser {
         final String KEY_PLAYER = "player";
         final String KEY_STAGE_NUMBER= "stage_number";
         final String KEY_XY="xy";
+        final String KEY_DATA="data";
         final String KEY_ID="id";
         final String KEY_BALL="ball";
+        final String KEY_SCREEN = "screen";
 System.out.println("XML" + XML );
         // Create hashmap repository
         Map<Integer,List<List<float[]>>> dataPlayers = new HashMap<Integer,List<List<float[]>>>();
@@ -193,14 +195,7 @@ System.out.println("XML" + XML );
                         String childName = childElement.getNodeName();
                         //System.out.println( "child name:" + childName+":"+KEY_BALL + ":");
                         //System.out.println(childName.equals(KEY_BALL));
-                        if (childName.equals(KEY_BALL)){
-                        /*    //System.out.println( "child is a ball" );
-                            System.out.println(childElement.)
-                            //int playerIndex = Integer.valueOf();
-                            System.out.println( "Player Index:  "+Integer.toString(playerIndex) );
-*/
-                        }
-                        else {
+                        if (!(childName.equals(KEY_BALL) || childName.equals(KEY_SCREEN))){
                             // Get ID of child (Player number)
                             //System.out.println( "child is not a ball" );
                             String idValueAsString = getValue(childElement, KEY_ID);
@@ -209,7 +204,7 @@ System.out.println("XML" + XML );
                             //System.out.println(idValue);
 
                             // Get XY coordinates for ID (player)
-                            String coordinatesAsString = getValue(childElement, KEY_XY);
+                            String coordinatesAsString = getValue(childElement, KEY_DATA);
                             //System.out.println(coordinatesAsString);
 
                             List<float[]> innerList = new ArrayList<float[]>();
@@ -256,8 +251,10 @@ System.out.println("XML" + XML );
                 String[] currentCoordinate = coordinatesAsStringArray[i].split(",");
 
                 // Add coordinates to output
-                float[] coordinatesAsNumber = new float[] {Float.parseFloat(currentCoordinate[0]),
-                                                           Float.parseFloat(currentCoordinate[1])};
+                float[] coordinatesAsNumber = new float[] { Float.parseFloat(currentCoordinate[0]),
+                                                            Float.parseFloat(currentCoordinate[1]),
+                                                            Float.parseFloat(currentCoordinate[2]),
+                                                            Float.parseFloat(currentCoordinate[3])};
 
                 output.add(coordinatesAsNumber);
 

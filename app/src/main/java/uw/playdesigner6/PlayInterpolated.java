@@ -161,7 +161,8 @@ public class PlayInterpolated {
         List<float[]> XYnew = new ArrayList<float[]>();
 
         float[] xy;
-
+        float[] screen;
+        float[] data;
         // Number of points for selected stage and player
             int pointCount = XYorig.size();
 
@@ -169,9 +170,21 @@ public class PlayInterpolated {
         // Only 1 coordinate in current stage, so repeat value
         if (pointCount == 1) {
             xy = new float[2];
+            screen = new float[2];
+
+
             xy[0] = XYorig.get(0)[0];
             xy[1] = XYorig.get(0)[1];
-            XYnew = new ArrayList<>(Collections.nCopies(FRAMES_PER_STAGE, xy));
+            if (XYorig.get(0).length > 2) {
+                screen[0] = XYorig.get(0)[2];
+                screen[1] = XYorig.get(0)[3];
+                data = new float[]{xy[0], xy[1], screen[0], screen[1]};
+            }
+            else {
+                data = new float[]{xy[0], xy[1]};
+            }
+            //XYnew = new ArrayList<>(Collections.nCopies(FRAMES_PER_STAGE, xy));
+            XYnew = new ArrayList<>(Collections.nCopies(FRAMES_PER_STAGE, data));
         }
         // pointCount > 1
         else {
@@ -252,8 +265,21 @@ public class PlayInterpolated {
                 xy[0] = xy1[0] + (xy2[0] - xy1[0]) * interpolationWeight;
                 xy[1] = xy1[1] + (xy2[1] - xy1[1]) * interpolationWeight;
 
+                if (xy2.length > 2) {
+                    float screenAngle = (float)Math.toDegrees(Math.atan2(xy2[1] - xy1[1], xy2[0] - xy1[0]));
+                    if (screenAngle < 0){screenAngle = screenAngle + 360;}
+                    data = new float[]{xy[0],  xy[1], xy2[2], screenAngle};
+
+                    System.out.println("Planter plated" +Float.toString(data[0]) + " " + Float.toString(data[1]) + " " + Float.toString(data[2]) + " " + Float.toString(data[3]));
+                }
+                else {
+                    data = new float[]{xy[0],  xy[1]};
+                }
+
+
                 // Add interpolated XY points to Coordinate list
-                XYnew.add(xy);
+                //XYnew.add(xy);
+                XYnew.add(data);
             }
         }
         return XYnew;
@@ -317,6 +343,7 @@ public class PlayInterpolated {
                 boolean pointPresent = (outerList.get(stageRequest).size() >= pointRequest);
 
                 if (pointPresent){
+
                     XY = outerList.get(stageRequest).get(pointRequest);
                 }
                 else {System.out.println("Play.getXY: Requested point is not exist");}
@@ -328,6 +355,47 @@ public class PlayInterpolated {
         return XY;
 
     }
+
+    public float[] getData(int playerRequest, int stageRequest, int pointRequest){
+
+        // Determine if requested player exists
+        boolean playerPresent = false;
+        for (Integer player : dataPlayers.keySet()) {
+            if (playerRequest == player){
+                playerPresent = true;
+                break;
+            }
+        }
+
+        // Initialize output
+        float[] XY = new float[4];
+
+        // If player present, check other requested parameters
+        if (playerPresent) {
+            List<List<float[]>> outerList = dataPlayers.get(playerRequest);
+
+            // Determine if requested stages present
+            boolean stagePresent = (outerList.size() >= stageRequest);
+
+            if (stagePresent) {
+                // Determine if requested pointed present
+                boolean pointPresent = (outerList.get(stageRequest).size() >= pointRequest);
+
+                if (pointPresent){
+
+                    XY = outerList.get(stageRequest).get(pointRequest);
+                }
+                else {System.out.println("Play.getXY: Requested point is not exist");}
+            }
+            else {System.out.println("Play.getXY: Requested stage does not exist");}
+        }
+        else {System.out.println("Play.getXY: Requested player does not exist");}
+
+        return XY;
+
+    }
+
+
 
     public float euclideanDistance(float x1, float x2, float y1, float y2) {
         return (float) Math.pow(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2), 0.5);

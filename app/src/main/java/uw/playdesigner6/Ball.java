@@ -15,7 +15,7 @@ public class Ball {
     private int WIDTH = 40;
     private int LINEWIDTH_DEFAULT = 5;
     private int LINEWIDTH_SELECTED = 10;
-    private int LINEWIDTH_PATH = 4;
+    private int LINEWIDTH_PATH = 3;
     private float[] dashLength = new float[]{10.0f, 10.0f};
     private static Context context;
 
@@ -238,9 +238,23 @@ public class Ball {
 
     }
 
+    public void updateXY(float[] XY){
+        X = XY[0];
+        Y = XY[1];
+    }
+
+    public void pathMoveToPosition(){
+        path.moveTo(X, Y);
+    }
+
+    public void pathLineToPosition(){
+        path.lineTo(X, Y);
+    }
+
     // Calculate Euclidean distance between points
     private float euclideanDistance(float x1, float x2, float y1, float y2) {
         return (float)Math.pow(Math.pow(x2 - x1, 2) + Math.pow(y2-y1, 2), 0.5);
     }
+
 
 }
