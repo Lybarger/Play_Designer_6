@@ -61,7 +61,7 @@ public class PlayView extends View {
     private android.os.Handler handler;
     private final int FRAME_RATE = 30;
 
-    private int pointIndex = 0;
+    //private int pointIndex = 0;
 
     private GestureDetectorCompat gestureDetector;
 
@@ -71,8 +71,11 @@ public class PlayView extends View {
     private int frame = 0;
     private int stage = 0;
     private int playPauseCount = 0;
-    private PlayInterpolated interpolatedPlay;
+    private PlayInterpolated playInterpolated;
     private int FRAMES_PER_STAGE = FRAME_RATE*STAGE_LENGTH;
+
+    private Playing playing;
+    private PlayElements playElements;
 
     //Instantiate view
     public PlayView(Context context, AttributeSet attrs) {
@@ -249,8 +252,9 @@ public class PlayView extends View {
 
         // Update frame if replaying existing play
         if (playExisting) {
-            updatePlay();
-            pointIndex++;
+            //updatePlay();
+            playElements = playing.updatePlay(playInterpolated,playElements);
+            //pointIndex++;
         }
 
         // Draw court
@@ -264,6 +268,7 @@ public class PlayView extends View {
 
         // Draw players
         players.updateCanvas(canvas);
+
 
         //Call in invalidate() using animation thread
         handler.postDelayed(runnable, FRAME_RATE);
@@ -376,8 +381,6 @@ public class PlayView extends View {
 
     // Start play
     public void startPlay(PlayData playDataMap){
-        //System.out.println( "startPlay");
-        //printMap(playMap);
 
         // Allow play update method to be called from onDraw
         playExisting = true;
@@ -385,25 +388,26 @@ public class PlayView extends View {
         // Create play as Play, based on points imported from XML file
         PlayData originalPlayData = playDataMap;
 
-        // Set current (initial) stage index to 0
-        stage = 0;
-        frame = 0;
 
         // Interpolate play, such that each stage of each player has the same number of points
+        playInterpolated = new PlayInterpolated(originalPlayData, court);
 
-        interpolatedPlay = new PlayInterpolated(originalPlayData, court);
-
-        // Update player and ball initial positions
-        for (int playerIndex : interpolatedPlay.dataPlayers.keySet()){
-            players.updateXY(playerIndex, interpolatedPlay.getXYcoordinate(playerIndex, 0, 0));
+/*        // Update player and ball initial positions
+        for (int playerIndex : playInterpolated.dataPlayers.keySet()){
+            players.updateXY(playerIndex, playInterpolated.getXYcoordinate(playerIndex, 0, 0));
         }
-        ball.updateXY(interpolatedPlay.dataBall.get(0).get(0));
+        ball.updateXY(playInterpolated.dataBall.get(0).get(0));
 
         // Reset paths and move to initial positions
         players.pathsReset();
         players.pathsMoveToPlayerPositions();
         ball.path.reset();
-        ball.path.moveTo(ball.X, ball.Y);
+        ball.path.moveTo(ball.X, ball.Y);*/
+
+        playElements = new PlayElements(players, ball);
+        playing = new Playing();
+        playing.startPlay(playInterpolated, playElements);
+
 
     }
 
@@ -412,13 +416,13 @@ public class PlayView extends View {
         playExisting = false;
     }
 
-    // Calculate Euclidean distance between points
+/*    // Calculate Euclidean distance between points
     private float euclideanDistance(float x1, float x2, float y1, float y2) {
         return (float)Math.pow(Math.pow(x2 - x1, 2) + Math.pow(y2-y1, 2), 0.5);
-    }
+    }*/
 
 
-    private void printMap(Map<Integer,List<List<float[]>>> play){
+/*    private void printMap(Map<Integer,List<List<float[]>>> play){
         Set<Integer> keys = play.keySet();
         for (Integer key : keys){
             List<List<float[]>> stages = play.get(key);
@@ -436,10 +440,12 @@ public class PlayView extends View {
                 }
             }
         }
-    }
+    }*/
 
     // During play replay, update player positions
-    public void updatePlay(){
+/*    public void updatePlay(){
+
+
 
         // Determine if end of stage reached
         if (frame >= FRAMES_PER_STAGE-1){
@@ -450,7 +456,7 @@ public class PlayView extends View {
             frame = 0;
 
             // Determine if end of play reached
-            if (stage >= interpolatedPlay.getStageCount()){
+            if (stage >= playInterpolated.getStageCount()){
 
                 // Reset stage
                 stage = 0;
@@ -460,10 +466,10 @@ public class PlayView extends View {
                 ball.path.reset();
 
                 // Update player and ball location to initial starting positions
-                for (int i : interpolatedPlay.dataPlayers.keySet()) {
-                    players.updateData(i, interpolatedPlay.getData(i,stage,frame));
+                for (int i : playInterpolated.dataPlayers.keySet()) {
+                    players.updateData(i, playInterpolated.getData(i,stage,frame));
                 }
-                ball.updateXY(interpolatedPlay.dataBall.get(stage).get(frame));
+                ball.updateXY(playInterpolated.dataBall.get(stage).get(frame));
 
                 // Move paths to initial starting locations
                 players.pathsMoveToPlayerPositions();
@@ -476,17 +482,17 @@ public class PlayView extends View {
             frame++;
         }
 
-        ball.updateXY(interpolatedPlay.dataBall.get(stage).get(frame));
+        ball.updateXY(playInterpolated.dataBall.get(stage).get(frame));
         ball.beingPassed = true;
 
         // Loop on players
-        for (int playerIndex : interpolatedPlay.dataPlayers.keySet()){
+        for (int playerIndex : playInterpolated.dataPlayers.keySet()){
             // Store previous XY coordinates
             float Xprevious = players.X[playerIndex];
             float Yprevious = players.Y[playerIndex];
 
             // Update player positions
-            players.updateData(playerIndex, interpolatedPlay.getData(playerIndex, stage, frame));
+            players.updateData(playerIndex, playInterpolated.getData(playerIndex, stage, frame));
 
             // Determine average XY coordinates for quadratic interpolation
             float Xavg = (Xprevious + players.X[playerIndex])/2;
@@ -505,5 +511,5 @@ public class PlayView extends View {
         // If player has ball, then do not draw path
         else {ball.path.moveTo(ball.X,ball.Y);}
 
-    }
+    }*/
 }

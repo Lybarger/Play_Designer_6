@@ -431,8 +431,8 @@ public class Players {
         for (int i = 0; i < PLAYER_COUNT; i++) {
 
             // Draw player icons on canvas
-            canvas.drawBitmap(icon[i], getX(i), getY(i), null);
             canvas.drawPath(path[i], paintPath);
+            canvas.drawBitmap(icon[i], getX(i), getY(i), null);
 
             if (screenPresent[i]){
                 canvas.drawBitmap(iconScreen[i],getScreenX(i),getScreenY(i),null);

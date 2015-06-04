@@ -74,6 +74,8 @@ public class PlayInterpolated {
         List<Integer> dataBallOriginal = playData.dataBall;
         Map<Integer,List<List<float[]>>> dataPlayerOriginal = playData.dataPlayers;
 
+        // Hoop position
+        //float[] hoopPosition = new float[] {court.getHoopPosition()[0], court.getHoopPosition()[1]};
 
         // Repository for (interpolated) data
         List<List<float[]>> dataNew = new ArrayList<List<float[]>>();
@@ -112,7 +114,7 @@ public class PlayInterpolated {
                     originalXY.add(dataPlayerOriginal.get(i).get(stageIndex).get(size - 1));
                 }
                 else {
-                    originalXY.add(court.getHoopPosition());
+                    originalXY.add(court.getHoopPositionNorm());
                 }
 
                 // Index of player receiving ball
@@ -125,7 +127,7 @@ public class PlayInterpolated {
                 }
                 else {
 
-                    originalXY.add(court.getHoopPosition());
+                    originalXY.add(court.getHoopPositionNorm());
                 }
             }
             // Ball not passed, so get coordinates of player holding ball
@@ -137,7 +139,7 @@ public class PlayInterpolated {
                     originalXY = new ArrayList<>(dataPlayerOriginal.get(i).get(stageIndex));
                 }
                 else {
-                    originalXY.add(court.getHoopPosition());
+                    originalXY.add(court.getHoopPositionNorm());
                 }
             }
             dataNew.add(interpolateXY(originalXY, court));

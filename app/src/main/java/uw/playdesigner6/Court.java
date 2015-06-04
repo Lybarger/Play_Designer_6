@@ -254,7 +254,11 @@ public class Court {
         return positions;
     }
 
-    public float[] getHoopPosition(){
+    public float[] getHoopPositionNorm(){
+        return new float[]{1/2f, 1 - hoopOffsetPixels/courtHeightPixels};
+    }
+
+    public float[] getHoopPositionPixels(){
         return new float[]{courtWidthPixels/2f, courtHeightPixels - hoopOffsetPixels};
     }
 }

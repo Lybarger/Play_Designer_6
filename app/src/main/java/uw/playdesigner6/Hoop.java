@@ -23,8 +23,8 @@ public class Hoop {
         if (context == null) {
             context = mcontext;
         }
-        X = court.getHoopPosition()[0];
-        Y = court.getHoopPosition()[1];
+        X = court.getHoopPositionPixels()[0];
+        Y = court.getHoopPositionPixels()[1];
 
         //createIcon();
 
