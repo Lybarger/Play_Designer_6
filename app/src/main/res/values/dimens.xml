@@ -18,6 +18,8 @@
 
     <dimen name="button_font_size">24sp</dimen>
     <dimen name="status_font_size">20sp</dimen>
+    <integer name="court_width">1066</integer>
+    <integer name="court_height">600</integer>
 
 
 </resources>

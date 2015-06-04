@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -28,10 +26,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -120,7 +115,7 @@ public class XMLParser {
 
 
    // Read play from XML file
-    public Play getPlay(String XML, int playerCount){
+    public PlayData getPlay(String XML, int playerCount){
 // public Map<String,List<String>> getPlay(String XML, int playerCount){
 // public Map<String,String> getStage(String XML, int stageNumber){
         // Data format
@@ -223,7 +218,7 @@ System.out.println("XML" + XML );
             }
 
         }
-        return new Play(dataPlayers,dataBall);
+        return new PlayData(dataPlayers,dataBall);
        /* else{
             return null;
         }*/

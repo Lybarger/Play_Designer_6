@@ -13,7 +13,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +30,8 @@ public class PlayView extends View {
     private Canvas canvasPlay;
 
     private Bitmap bitmapPlay;
+    //private Bitmap court;
+    private Court court;
 
     //Player definition constants
     private static int PLAYER_ICON_SIZE = 40;
@@ -89,14 +90,19 @@ public class PlayView extends View {
         // Create canvas
         paintCanvas = new Paint(Paint.DITHER_FLAG);
 
+        // Create court
+        court = new Court(context);
+
         // Create players
-        players = new Players(context);
+        players = new Players(context, court);
 
         // Create ball
-        ball = new Ball(INITIAL_X[0], INITIAL_Y[0], 0, context);
+        ball = new Ball(0, context, court);
 
         // Create hoop
-        hoop = new Hoop(context);
+        hoop = new Hoop(context, court);
+
+
 
         // Initialize court (set the initial positions for objects)
 //        initializeCourt();
@@ -247,26 +253,20 @@ public class PlayView extends View {
             pointIndex++;
         }
 
-        // Draw path
+        // Draw court
+        canvas.drawBitmap(court.bitmap, 0, 0, null);
 
+        // Draw ball path
         canvas.drawPath(ball.path, ball.paintPath);
 
+        // Draw ball
         canvas.drawBitmap(ball.icon, ball.getX(), ball.getY(), null);
 
+        // Draw players
         players.updateCanvas(canvas);
-
-        canvas.drawBitmap(hoop.icon, hoop.getX(), hoop.getY(), null);
-
-        // Need to determine if necessary
-        canvas.drawBitmap(bitmapPlay, 0, 0, paintCanvas);
-
-        //screensObject.drawScreens(canvas);
 
         //Call in invalidate() using animation thread
         handler.postDelayed(runnable, FRAME_RATE);
-
-        //canvas.drawText(Integer.toString(stage), 100, 100, new Paint());
-        //canvas.drawText(Integer.toString(dataPlayers.get(0).size()), 100, 150, new Paint());
     }
 
 
@@ -375,7 +375,7 @@ public class PlayView extends View {
     }
 
     // Start play
-    public void startPlay(Play playMap){
+    public void startPlay(PlayData playDataMap){
         //System.out.println( "startPlay");
         //printMap(playMap);
 
@@ -383,14 +383,15 @@ public class PlayView extends View {
         playExisting = true;
 
         // Create play as Play, based on points imported from XML file
-        Play originalPlay = playMap;
+        PlayData originalPlayData = playDataMap;
 
         // Set current (initial) stage index to 0
         stage = 0;
         frame = 0;
 
         // Interpolate play, such that each stage of each player has the same number of points
-        interpolatedPlay = new PlayInterpolated(originalPlay, hoop);
+
+        interpolatedPlay = new PlayInterpolated(originalPlayData, court);
 
         // Update player and ball initial positions
         for (int playerIndex : interpolatedPlay.dataPlayers.keySet()){
@@ -440,10 +441,7 @@ public class PlayView extends View {
     // During play replay, update player positions
     public void updatePlay(){
 
-
-        //List<float[]> coordinatesAsList;
-
-// Determine if end of stage reached
+        // Determine if end of stage reached
         if (frame >= FRAMES_PER_STAGE-1){
 
             // Increment stage
@@ -453,12 +451,6 @@ public class PlayView extends View {
 
             // Determine if end of play reached
             if (stage >= interpolatedPlay.getStageCount()){
-/*
-                if (playPauseCount<FRAMES_PER_STAGE){
-                    playPauseCount7++;
-                }
-                else {*/
-//                    playPauseCount = 0;
 
                 // Reset stage
                 stage = 0;
@@ -469,21 +461,13 @@ public class PlayView extends View {
 
                 // Update player and ball location to initial starting positions
                 for (int i : interpolatedPlay.dataPlayers.keySet()) {
-                    //players.updateXY(i, interpolatedPlay.getXYcoordinate(i, stage, frame));
-                    //float[] xx = ;
                     players.updateData(i, interpolatedPlay.getData(i,stage,frame));
-//System.out.println( "player" + players.X[1]);
-                    //System.out.println("Playview " +Float.toString(xx[0]) + " " + Float.toString(xx[1]) + " " + Float.toString(xx[2]) + " " + Float.toString(xx[3]));
-                    //System.out.println(players.screenPresent[i]);
-                    //System.out.println(players.screenAngle[i]);
-                    //players.screenPresent[i]=true;
                 }
                 ball.updateXY(interpolatedPlay.dataBall.get(stage).get(frame));
 
                 // Move paths to initial starting locations
                 players.pathsMoveToPlayerPositions();
                 ball.pathMoveToPosition();
-
             }
 
         }

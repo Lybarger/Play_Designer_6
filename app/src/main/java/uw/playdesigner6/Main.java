@@ -23,14 +23,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 
@@ -38,14 +34,17 @@ import java.util.Set;
 public class Main extends ActionBarActivity implements MultiChoiceListDialogFragment.multiChoiceListDialogListener, SingleChoiceListDialogFragment.singleChoiceListDialogListener {
 //public class Main extends ActionBarActivity {
     private static final String TAG = Main.class.getSimpleName();
-    public int SERVERPORT = 4445;
+    public int SERVERPORT = 49152;//4445;
+
+    public final String ip = "10.0.1.2";
 
 
-/*    private Paint paint_circle;
+    /*    private Paint paint_circle;
     private ImageView image_court, image_play;
     private Canvas canvas_play;
     private Bitmap bitmap_play;*/
     private PlayView playView;
+
 
 /*    private TextView text_status;
     private Bitmap canvasBitmap;*/
@@ -90,8 +89,9 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Random random = new Random();
-        SERVERPORT = random.nextInt(65535 - 49152 + 1) + 49152;
+        //Random random = new Random();
+        //SERVERPORT = random.nextInt(65535 - 49152 + 1) + 49152;
+
 
         //
 /*        String folder_main = "play_designer";
@@ -140,6 +140,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         playView.setupDataPoints(dataPlayers, dataBall);
         //Getting the public IP and upload it into amazon s3
         Thread ip = new GetIP();
+
+
         ip.start();
 
         //Starting the TCP Connection
@@ -179,24 +181,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         this.multiThreadingTcp.interrupt();
     }
 
-/*    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
-    }*/
 
-/*    public void printMap(){
-        Set<String> keys = dataPlayers.keySet();
-        for (String key : keys) {
-            System.out.println("\nPlayer " + key + " : \n");
-            List<String> points = dataPlayers.get(key);
-            for (String point : points){
-                System.out.print(point);
-            }
-        }
-    }*/
 
     //Clear hash map
     public void mapClear(){
@@ -245,26 +230,7 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         return super.onOptionsItemSelected(item);
     }
 
-/*    public void onTest(View view) {
-//        textCurrentStage.setText("SLDKFJSKDJF");
-//        playView.initializeCourt();
-//        playView.invalidate();
-//        readPlayFromFile("qq.XML");
-//        playView.invalidate();
-        new Thread(new Runnable() {
-            public void run() {
-                playView.post(new Runnable() {
-                    public void run () {
-                        for (int pointIndex = 0; pointIndex < 20; pointIndex++) {
-                            playView.temporary();
-                        }
-                    }
-                });
-            }
 
-        }).start();
-
-    }*/
 
     //Handle Play Existing button click event
     public void onClickPlayExisting(View view)
@@ -610,6 +576,13 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
 
 
     public String convertPlayToXML() {
+
+        int playViewWidth = playView.getWidth();
+        int playViewHeight = playView.getHeight();
+        System.out.println( "view height and weight ");
+        System.out.println(playViewWidth);
+        System.out.println(playViewHeight);
+
         String n = "\n";
 
         String t = "    ";
@@ -649,8 +622,8 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                 for (int currentPoint = 0; currentPoint < pointCount; currentPoint++) {
                     // Points as string, comma delimited
                     pointsAsString = pointsAsString
-                                    + Float.toString(data.get(currentPoint)[0])+
-                                "," + Float.toString(data.get(currentPoint)[1])+
+                                    + Float.toString(data.get(currentPoint)[0]/playViewWidth)+
+                                "," + Float.toString(data.get(currentPoint)[1]/playViewHeight)+
                                 "," + Float.toString(data.get(currentPoint)[2])+
                                 "," + Float.toString(data.get(currentPoint)[3]);
 
@@ -674,6 +647,99 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
         System.out.println(playAsString);
         return playAsString;
     }
+
+
+
+    // Replay play
+    public void readPlayFromFile(String filename){
+
+        // XML parser based on tutorial found at:
+        //      http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
+
+        // Replay as XML
+        String playAsXml = readFromFile(filename);
+
+
+        Log.w(TAG, "sending message through tcp");
+        multiThreadingTcp.sendMessage(playAsXml);
+
+
+        // Create instance of XML parser
+        XMLParser parser = new XMLParser();
+
+        // Parse XML play into map
+        PlayData currentPlayData = parser.getPlay(playAsXml, PLAYER_COUNT);
+
+                // Send play to view for playing
+        playView.startPlay(currentPlayData);
+
+    }
+
+    private class GetIP extends Thread{
+        public void run() {
+            System.out.println("getting ip");
+            try {
+/*                URL whatismyip = new URL("http://checkip.amazonaws.com/");
+                BufferedReader in = null;
+                in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+                final String ip = in.readLine(); //you get the IP as a String*/
+
+                System.out.println("Finish getting ip " +  ip + " " + SERVERPORT);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+/*                        try {
+                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("IP_SERVER.txt", Context.MODE_PRIVATE));
+                            outputStreamWriter.write(ip + " " + SERVERPORT);
+                            outputStreamWriter.close();
+                            uploadToCloud();
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }*/
+                    }
+                });
+
+            } /*catch (IOException e) {
+                e.printStackTrace();
+            }*/
+            finally {
+
+            }
+
+        }
+    }
+
+/*    public void uploadToCloud(){
+        UploadCredentials credentials = new UploadCredentials(getResources(),this);
+        credentials.execute();
+    }*/
+
+
+
+    /*    public void onTest(View view) {
+//        textCurrentStage.setText("SLDKFJSKDJF");
+//        playView.initializeCourt();
+//        playView.invalidate();
+//        readPlayFromFile("qq.XML");
+//        playView.invalidate();
+        new Thread(new Runnable() {
+            public void run() {
+                playView.post(new Runnable() {
+                    public void run () {
+                        for (int pointIndex = 0; pointIndex < 20; pointIndex++) {
+                            playView.temporary();
+                        }
+                    }
+                });
+            }
+
+        }).start();
+
+    }*/
 
     // Concatenate most recent stage for file recording
 /*    //https://xjaphx.wordpress.com/2011/10/27/android-xml-adventure-create-write-xml-data/
@@ -712,67 +778,23 @@ public class Main extends ActionBarActivity implements MultiChoiceListDialogFrag
                  dataPlayers.get("5"));
     }*/
 
-    // Replay play
-    public void readPlayFromFile(String filename){
 
-        // XML parser based on tutorial found at:
-        //      http://www.androidhive.info/2011/11/android-xml-parsing-tutorial/
-
-        // Replay as XML
-        String playAsXml = readFromFile(filename);
-
-
-        Log.w(TAG, "sending message through tcp");
-        multiThreadingTcp.sendMessage(playAsXml);
-
-
-        // Create instance of XML parser
-        XMLParser parser = new XMLParser();
-
-        // Parse XML play into map
-        Play currentPlay = parser.getPlay(playAsXml, PLAYER_COUNT);
-
-                // Send play to view for playing
-        playView.startPlay(currentPlay);
-
-    }
-
-    private class GetIP extends Thread{
-        public void run() {
-            System.out.println("getting ip");
-            try {
-                URL whatismyip = new URL("http://checkip.amazonaws.com/");
-                BufferedReader in = null;
-                in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
-                final String ip = in.readLine(); //you get the IP as a String
-                System.out.println("Finish getting ip " +  ip + " " + SERVERPORT);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("IP_SERVER.txt", Context.MODE_PRIVATE));
-                            outputStreamWriter.write(ip + " " + SERVERPORT);
-                            outputStreamWriter.close();
-                            uploadToCloud();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+    /*    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
         }
-    }
+        return false;
+    }*/
 
-    public void uploadToCloud(){
-        UploadCredentials credentials = new UploadCredentials(getResources(),this);
-        credentials.execute();
-    }
+/*    public void printMap(){
+        Set<String> keys = dataPlayers.keySet();
+        for (String key : keys) {
+            System.out.println("\nPlayer " + key + " : \n");
+            List<String> points = dataPlayers.get(key);
+            for (String point : points){
+                System.out.print(point);
+            }
+        }
+    }*/
 }

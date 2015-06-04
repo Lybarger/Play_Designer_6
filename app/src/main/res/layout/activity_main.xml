@@ -106,9 +106,9 @@
 
                 <uw.playdesigner6.PlayView
                     android:id="@+id/play"
-                    android:layout_width="800dp"
-                    android:layout_height="600dp"
-                    android:background="@drawable/half_court_cropped2_no_hoop"
+                    android:layout_width="@integer/court_width"
+                    android:layout_height="@integer/court_height"
+
                     />
         </LinearLayout>
 
