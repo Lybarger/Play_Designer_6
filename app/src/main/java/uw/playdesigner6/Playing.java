@@ -6,8 +6,14 @@ import android.graphics.Canvas;
  * Created by lybar_000 on 6/4/2015.
  */
 public class Playing {
+
+    /**
+     * Created by lybar_000 on 6/4/2015.
+     */
+
     public int stage = 0;
     public int frame = 0;
+
 
     public Playing(){
 
@@ -31,6 +37,8 @@ public class Playing {
     }
     public PlayElements updatePlay(PlayInterpolated playInterpolated, PlayElements playElements){
 
+        playElements.playEndReached = false;
+
         // Determine if end of stage reached
         if (frame >= playInterpolated.FRAMES_PER_STAGE-1){
 
@@ -44,6 +52,7 @@ public class Playing {
 
                 // Reset stage
                 stage = 0;
+                playElements.playEndReached = true;
 
                 // Reset paths
                 playElements.players.pathsReset();
@@ -87,7 +96,7 @@ public class Playing {
 
             // Determine if player has bought all or if ball is being passed
             boolean playerHasBall = ((playElements.ball.X == playElements.players.X[playerIndex])
-                                   &&(playElements.ball.Y == playElements.players.Y[playerIndex]));
+                    &&(playElements.ball.Y == playElements.players.Y[playerIndex]));
             playElements.ball.beingPassed = playElements.ball.beingPassed && !playerHasBall;
         }
 
@@ -104,6 +113,8 @@ public class Playing {
 
 
     }
+
+
 
 
 

@@ -13,23 +13,17 @@ public class PlayData {
 
     public Map<Integer,List<List<float[]>>> dataPlayers;
     public List<Integer> dataBall = new ArrayList<Integer>();
-    //public Map<Integer,List<List<float[]>>> dataScreens;
 
     public int currentStage;
     public int currentPoint;
     public float stagePercentComplete;
     public boolean playComplete;
 
-
-
     public PlayData(Map<Integer, List<List<float[]>>> dataPlayersTemp, List<Integer> dataBallTemp){
 
-//        public Play(Map<Integer,List<List<float[]>>> pointsTemp, int currentStageTemp,  float stagePercentCompleteTemp, int currentPointTemp,
- //       boolean playCompleteTemp){
 
         dataPlayers = dataPlayersTemp;
         dataBall = dataBallTemp;
-        //dataScreens = dataScreensTemp;
 
         currentStage = 0;
         stagePercentComplete = 0;
@@ -59,7 +53,7 @@ public class PlayData {
                     String string3 = ", X: " + Float.toString(coordinate[0]);
                     String string4 = ", Y: " + Float.toString(coordinate[1]);
 
-                   summary = string1 + string2 + string3 + string4 + '\n';
+                    summary = string1 + string2 + string3 + string4 + '\n';
 
                 }
 
