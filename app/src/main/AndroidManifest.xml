@@ -10,7 +10,7 @@
     <application
 
         android:allowBackup="true"
-        android:icon="@drawable/half_court"
+        android:icon="@drawable/w_logo_purple_hex"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
