@@ -315,7 +315,6 @@ public class PlayView extends View {
             players.updateScreenState2(ball);
 
             // Ball is passed, so increment stage
-            System.out.println( "ball selected, increment stage ");
             incrementStage();
             justPassed = true;
 
